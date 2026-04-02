@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Playfair Display', serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.soft-panel {
+  background-image:
+    radial-gradient(circle at top right, rgba(212, 175, 55, 0.1) 0, transparent 35%),
+    radial-gradient(circle at bottom left, rgba(139, 26, 26, 0.08) 0, transparent 40%);
+  background-color: rgba(255, 252, 248, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.12);
+}
+
+.action-btn {
+  @apply rounded-full px-4 py-2 text-sm font-semibold transition;
+  background: linear-gradient(135deg, #d4af37, #f3d98f);
+  color: #3f2506;
+}
+
+.field {
+  @apply text-sm font-medium flex flex-col gap-1;
+}
+
+.field input,
+.field select,
+.field textarea {
+  @apply rounded-lg border px-3 py-2 text-sm;
+  border-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.92);
+}
+
+.petal {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  background: linear-gradient(180deg, rgba(255, 211, 185, 0.8), rgba(223, 123, 114, 0.6));
+  border-radius: 50% 50% 50% 0;
+}
