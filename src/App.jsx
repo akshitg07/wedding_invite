@@ -45,6 +45,8 @@ const normalizeSections = (sections) =>
         sectionColor: section.sectionColor || tint(config.themes[config.theme].primary, idx * 8),
         titleColor: section.titleColor || '#ffffff',
         bodyColor: section.bodyColor || '#fff5e9',
+        animationUrl: section.animationUrl || '',
+        transition: section.transition || 'fadeUp',
       };
     }
 
@@ -73,9 +75,30 @@ const normalizeSections = (sections) =>
       sectionColor: section.sectionColor || tint(config.themes[config.theme].primary, idx * 8),
       titleColor: section.titleColor || '#ffffff',
       bodyColor: section.bodyColor || '#fff5e9',
+      animationUrl: section.animationUrl || '',
+      transition: section.transition || 'fadeUp',
       media: [...photos, ...videos],
     };
   });
+
+const transitionMap = {
+  fadeUp: {
+    initial: { opacity: 0, y: 30 },
+    whileInView: { opacity: 1, y: 0 },
+  },
+  slideLeft: {
+    initial: { opacity: 0, x: 60 },
+    whileInView: { opacity: 1, x: 0 },
+  },
+  zoomIn: {
+    initial: { opacity: 0, scale: 0.92 },
+    whileInView: { opacity: 1, scale: 1 },
+  },
+  rotateIn: {
+    initial: { opacity: 0, rotate: -3, scale: 0.96 },
+    whileInView: { opacity: 1, rotate: 0, scale: 1 },
+  },
+};
 
 const getInitialData = () => {
   const fallback = {
@@ -83,6 +106,7 @@ const getInitialData = () => {
     themeColors: config.themes[config.theme],
     invitation: config.invitation,
     sections: normalizeSections(config.sections),
+    musicUrl: config.music?.url || '',
   };
 
   try {
@@ -166,6 +190,16 @@ function App() {
     }));
   };
 
+  const removeMedia = (sectionId, mediaId) => {
+    setData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((section) => {
+        if (section.id !== sectionId) return section;
+        return { ...section, media: section.media.filter((item) => item.id !== mediaId) };
+      }),
+    }));
+  };
+
   const addSection = () => {
     if (!newSectionTitle.trim()) return;
     setData((prev) => ({
@@ -179,6 +213,8 @@ function App() {
           sectionColor: tint(prev.themeColors.primary, prev.sections.length * 10),
           titleColor: '#ffffff',
           bodyColor: '#fff5e9',
+          animationUrl: '',
+          transition: 'fadeUp',
           media: [],
         },
       ],
@@ -265,6 +301,22 @@ function App() {
     }));
   };
 
+  const uploadMusic = (files) => {
+    const file = Array.from(files || [])[0];
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+      setNotice('Please upload a valid audio file for music.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setData((prev) => ({ ...prev, musicUrl: reader.result }));
+      setNotice('');
+      setIsMuted(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const dropOnCanvas = (e, sectionId) => {
     e.preventDefault();
     if (!dragMedia || dragMedia.sectionId !== sectionId) return;
@@ -278,7 +330,7 @@ function App() {
 
   return (
     <div style={{ color: theme.text }}>
-      <audio ref={audioRef} src={config.music.url} loop autoPlay playsInline />
+      <audio ref={audioRef} src={data.musicUrl || config.music.url} loop autoPlay playsInline />
 
       {isControlPlane ? (
         <main className="control-bg min-h-screen px-4 py-8">
@@ -301,6 +353,20 @@ function App() {
               <label className="field">Primary Color<input type="color" value={data.themeColors.primary} onChange={(e) => setData((prev) => ({ ...prev, themeColors: { ...prev.themeColors, primary: e.target.value } }))} /></label>
             </div>
 
+            <div className="panel grid md:grid-cols-2 gap-4">
+              <label className="field">Music URL
+                <input
+                  value={data.musicUrl || ''}
+                  onChange={(e) => setData((prev) => ({ ...prev, musicUrl: e.target.value }))}
+                  placeholder="https://...mp3"
+                />
+              </label>
+              <div className="field">
+                <span>Upload Music (browser file)</span>
+                <input type="file" accept="audio/*" onChange={(e) => uploadMusic(e.target.files)} />
+              </div>
+            </div>
+
             <div className="panel space-y-4">
               <h3 className="font-display text-xl" style={{ color: theme.primary }}>Add New Section</h3>
               <label className="field">Section Title<input value={newSectionTitle} onChange={(e) => setNewSectionTitle(e.target.value)} /></label>
@@ -316,6 +382,15 @@ function App() {
                   <label className="field">Section Color<input type="color" value={section.sectionColor} onChange={(e) => updateSection(section.id, 'sectionColor', e.target.value)} /></label>
                   <label className="field">Title Font Color<input type="color" value={section.titleColor || '#ffffff'} onChange={(e) => updateSection(section.id, 'titleColor', e.target.value)} /></label>
                   <label className="field">Body Font Color<input type="color" value={section.bodyColor || '#fff5e9'} onChange={(e) => updateSection(section.id, 'bodyColor', e.target.value)} /></label>
+                  <label className="field">Transition
+                    <select value={section.transition || 'fadeUp'} onChange={(e) => updateSection(section.id, 'transition', e.target.value)}>
+                      <option value="fadeUp">Fade Up</option>
+                      <option value="slideLeft">Slide Left</option>
+                      <option value="zoomIn">Zoom In</option>
+                      <option value="rotateIn">Rotate In</option>
+                    </select>
+                  </label>
+                  <label className="field">Internet Animation URL<input value={section.animationUrl || ''} onChange={(e) => updateSection(section.id, 'animationUrl', e.target.value)} placeholder="https://...gif / mp4 / embed url" /></label>
                 </div>
                 <label className="field">Body<textarea rows={3} value={section.body} onChange={(e) => updateSection(section.id, 'body', e.target.value)} /></label>
 
@@ -391,6 +466,15 @@ function App() {
                           </>
                         )}
                       </div>
+                      {item.type === 'photo' && (
+                        <button
+                          type="button"
+                          className="mt-2 rounded-md bg-red-700 px-3 py-1 text-xs font-semibold text-white"
+                          onClick={() => removeMedia(section.id, item.id)}
+                        >
+                          Remove Photo
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -425,7 +509,15 @@ function App() {
           </AnimatePresence>
 
           {data.sections.map((section, idx) => (
-            <section key={section.id} className="min-h-screen px-4 py-10 md:py-16" style={{ backgroundColor: section.sectionColor || tint(theme.primary, idx * 8) }}>
+            <motion.section
+              key={section.id}
+              className="min-h-screen px-4 py-10 md:py-16"
+              style={{ backgroundColor: section.sectionColor || tint(theme.primary, idx * 8) }}
+              initial={transitionMap[section.transition || 'fadeUp'].initial}
+              whileInView={transitionMap[section.transition || 'fadeUp'].whileInView}
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{ duration: 0.75, ease: 'easeOut' }}
+            >
               <div className="max-w-5xl mx-auto text-center text-white space-y-5 relative">
                 {idx === 0 && (
                   <>
@@ -439,6 +531,17 @@ function App() {
                 )}
                 <h3 className="font-display text-4xl md:text-5xl" style={{ color: section.titleColor || '#ffffff' }}>{section.title}</h3>
                 <p className="max-w-3xl mx-auto text-lg" style={{ color: section.bodyColor || '#fff5e9' }}>{section.body}</p>
+                {section.animationUrl && (
+                  <div className="mx-auto w-full max-w-3xl rounded-xl overflow-hidden bg-black/20 min-h-24">
+                    {section.animationUrl.match(/\.(gif|webp|png|jpg|jpeg)$/i) ? (
+                      <img src={section.animationUrl} alt="Section animation" className="w-full max-h-72 object-cover" />
+                    ) : section.animationUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+                      <video src={section.animationUrl} autoPlay loop muted playsInline className="w-full max-h-72 object-cover" />
+                    ) : (
+                      <iframe title={`animation-${section.id}`} src={section.animationUrl} className="w-full h-72 border-0" loading="lazy" />
+                    )}
+                  </div>
+                )}
 
                 <div className="stage-output">
                   {section.media.map((item) => (
@@ -468,7 +571,7 @@ function App() {
                   ))}
                 </div>
               </div>
-            </section>
+            </motion.section>
           ))}
         </main>
       )}
