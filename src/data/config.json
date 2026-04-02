@@ -1,0 +1,62 @@
+{
+  "introText": "Shubh Vivaah",
+  "theme": "royalRed",
+  "themes": {
+    "royalRed": {
+      "name": "Royal Red",
+      "background": "#4c0b10",
+      "cardBackground": "#fff7f2",
+      "primary": "#7a0d1b",
+      "secondary": "#d4af37",
+      "accent": "#f2d8c9",
+      "text": "#2b1616"
+    },
+    "roseGold": {
+      "name": "Rose Gold",
+      "background": "#f8ece8",
+      "cardBackground": "#fff9f7",
+      "primary": "#a5485e",
+      "secondary": "#cc8f7a",
+      "accent": "#f4d9cf",
+      "text": "#402d2f"
+    }
+  },
+  "invitation": {
+    "bride": "Ananya",
+    "groom": "Arjun",
+    "familiesLine": "Together with their families",
+    "date": "2026-12-05",
+    "time": "6:30 PM onwards",
+    "venue": "The Royal Orchid Palace, Jaipur, Rajasthan",
+    "mapsUrl": "https://maps.google.com/?q=Royal+Orchid+Palace+Jaipur",
+    "message": "With blessings and joy, the Sharma and Iyer families invite you to celebrate this sacred union and shower the couple with your love.",
+    "from": "Warm regards, Sharma & Iyer Families"
+  },
+  "sections": [
+    {
+      "id": "welcome",
+      "title": "Wedding Invitation",
+      "body": "Join us as we begin our forever with love, traditions, and blessings.",
+      "sectionColor": "#8d1324",
+      "titleColor": "#ffffff",
+      "bodyColor": "#ffe9d1",
+      "animationUrl": "",
+      "transition": "fadeUp",
+      "media": []
+    },
+    {
+      "id": "reception",
+      "title": "Reception",
+      "body": "Dinner and blessings ceremony follows the wedding rituals.",
+      "sectionColor": "#b88925",
+      "titleColor": "#ffffff",
+      "bodyColor": "#fff7de",
+      "animationUrl": "",
+      "transition": "slideLeft",
+      "media": []
+    }
+  ],
+  "music": {
+    "url": "https://cdn.pixabay.com/download/audio/2022/10/30/audio_c6f8ca11ee.mp3?filename=indian-background-126080.mp3"
+  }
+}
