@@ -559,7 +559,7 @@ function App() {
                       }}
                     >
                       {item.type === 'photo' ? (
-                        <img src={item.src} alt="Uploaded" className="w-full h-full object-cover rounded-md" />
+                        <img src={item.src} alt="Uploaded" className="w-full h-full object-contain rounded-md bg-black/10" />
                       ) : item.type === 'video' ? (
                         <video controls className="w-full h-full rounded-md"><source src={item.src} type="video/mp4" /></video>
                       ) : (
@@ -688,7 +688,7 @@ function App() {
                       }}
                     >
                       {item.type === 'photo' ? (
-                        <img src={item.src} alt="Wedding" className="w-full h-full object-cover rounded-xl shadow-lg" />
+                        <img src={item.src} alt="Wedding" className="w-full h-full object-contain rounded-xl shadow-lg bg-black/10" />
                       ) : item.type === 'video' ? (
                         <video controls className="w-full h-full rounded-xl shadow-lg"><source src={item.src} type="video/mp4" /></video>
                       ) : (

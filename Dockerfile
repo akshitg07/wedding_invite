@@ -19,6 +19,6 @@ RUN npm install --omit=dev
 
 ENV PORT=9080
 ENV STATE_FILE=/data/invitation-state.json
-EXPOSE 8080
+EXPOSE 9080
 
 CMD ["npm", "run", "start"]

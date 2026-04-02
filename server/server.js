@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = Number(process.env.PORT || 8080);
+const PORT = Number(process.env.PORT || 9080);
 const STATE_FILE = process.env.STATE_FILE || '/data/invitation-state.json';
 const DIST_DIR = path.resolve(__dirname, '../dist');
 
