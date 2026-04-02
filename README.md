@@ -10,9 +10,11 @@ A scrollable Indian wedding invitation website with full-screen themed sections 
 ## Control Plane capabilities
 
 - Edit all section titles, descriptions, and **section colors**
+- Change title/body font color for each section independently
 - Add new sections dynamically
 - Upload photos/videos **from browser only** for each section
 - Drag-and-place photos/videos anywhere in the section canvas
+- Add text blocks inside media canvas (beside/over images) and drag-place them
 - Resize placed media using width/height sliders
 - Edit media placement precisely with X/Y sliders
 
@@ -20,7 +22,8 @@ A scrollable Indian wedding invitation website with full-screen themed sections 
 
 ### Images
 - Supported extensions/types: `.jpg`, `.jpeg`, `.png`, `.webp`
-- Max image size: **8 MB per file**
+- Max image size: **15 MB per file**
+- Images are auto-compressed client-side during upload to improve stability
 
 ### Videos
 - Supported extensions/types: `.mp4`, `.webm`, `.ogg`
@@ -47,7 +50,7 @@ Open:
 
 ```bash
 docker build -t wedding-invite .
-docker run --rm -p 8080:80 wedding-invite
+docker run --rm -p 9080:80 wedding-invite
 ```
 
 Open:

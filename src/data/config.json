@@ -38,6 +38,8 @@
       "title": "Wedding Invitation",
       "body": "Join us as we begin our forever with love, traditions, and blessings.",
       "sectionColor": "#8d1324",
+      "titleColor": "#ffffff",
+      "bodyColor": "#ffe9d1",
       "media": []
     },
     {
@@ -45,6 +47,8 @@
       "title": "Reception",
       "body": "Dinner and blessings ceremony follows the wedding rituals.",
       "sectionColor": "#b88925",
+      "titleColor": "#ffffff",
+      "bodyColor": "#fff7de",
       "media": []
     }
   ],

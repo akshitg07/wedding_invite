@@ -3,10 +3,30 @@ import { AnimatePresence, motion } from 'framer-motion';
 import config from './data/config.json';
 
 const STORAGE_KEY = 'wedding_invite_live_data_v4';
-const MAX_IMAGE_MB = 8;
+const MAX_IMAGE_MB = 15;
 const MAX_VIDEO_MB = 40;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
+
+const compressImageFile = (file) =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDimension = 2400;
+        const ratio = Math.min(maxDimension / img.width, maxDimension / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.84));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
 const tint = (hex, amount) => {
   const clean = hex.replace('#', '');
@@ -19,7 +39,14 @@ const tint = (hex, amount) => {
 
 const normalizeSections = (sections) =>
   sections.map((section, idx) => {
-    if (section.media) return section;
+    if (section.media) {
+      return {
+        ...section,
+        sectionColor: section.sectionColor || tint(config.themes[config.theme].primary, idx * 8),
+        titleColor: section.titleColor || '#ffffff',
+        bodyColor: section.bodyColor || '#fff5e9',
+      };
+    }
 
     const photos = (section.photos || []).map((src, photoIdx) => ({
       id: `${section.id}-photo-${photoIdx}`,
@@ -44,6 +71,8 @@ const normalizeSections = (sections) =>
     return {
       ...section,
       sectionColor: section.sectionColor || tint(config.themes[config.theme].primary, idx * 8),
+      titleColor: section.titleColor || '#ffffff',
+      bodyColor: section.bodyColor || '#fff5e9',
       media: [...photos, ...videos],
     };
   });
@@ -73,6 +102,7 @@ function App() {
   const [data, setData] = useState(getInitialData);
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [newSectionBody, setNewSectionBody] = useState('');
+  const [textDrafts, setTextDrafts] = useState({});
   const [dragMedia, setDragMedia] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [notice, setNotice] = useState('');
@@ -84,7 +114,11 @@ function App() {
   );
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch {
+      setNotice('Saved media is too large for browser storage. Current session will continue without crashing.');
+    }
   }, [data]);
 
   useEffect(() => {
@@ -143,12 +177,43 @@ function App() {
           title: newSectionTitle,
           body: newSectionBody,
           sectionColor: tint(prev.themeColors.primary, prev.sections.length * 10),
+          titleColor: '#ffffff',
+          bodyColor: '#fff5e9',
           media: [],
         },
       ],
     }));
     setNewSectionTitle('');
     setNewSectionBody('');
+  };
+
+  const addCanvasText = (sectionId) => {
+    const text = (textDrafts[sectionId] || '').trim();
+    if (!text) return;
+    setData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((section) => {
+        if (section.id !== sectionId) return section;
+        return {
+          ...section,
+          media: [
+            ...section.media,
+            {
+              id: `${sectionId}-text-${Date.now()}`,
+              type: 'text',
+              text,
+              color: '#ffffff',
+              fontSize: 28,
+              x: 24,
+              y: 36,
+              w: 40,
+              h: 18,
+            },
+          ],
+        };
+      }),
+    }));
+    setTextDrafts((prev) => ({ ...prev, [sectionId]: '' }));
   };
 
   const uploadMedia = async (sectionId, type, files) => {
@@ -168,16 +233,19 @@ function App() {
       setNotice('');
     }
 
-    const encoded = await Promise.all(
-      valid.map(
-        (file) =>
-          new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(file);
-          })
-      )
-    );
+    const encoded =
+      type === 'photo'
+        ? await Promise.all(valid.map((file) => compressImageFile(file)))
+        : await Promise.all(
+            valid.map(
+              (file) =>
+                new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result);
+                  reader.readAsDataURL(file);
+                })
+            )
+          );
 
     setData((prev) => ({
       ...prev,
@@ -246,6 +314,8 @@ function App() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <label className="field">Title<input value={section.title} onChange={(e) => updateSection(section.id, 'title', e.target.value)} /></label>
                   <label className="field">Section Color<input type="color" value={section.sectionColor} onChange={(e) => updateSection(section.id, 'sectionColor', e.target.value)} /></label>
+                  <label className="field">Title Font Color<input type="color" value={section.titleColor || '#ffffff'} onChange={(e) => updateSection(section.id, 'titleColor', e.target.value)} /></label>
+                  <label className="field">Body Font Color<input type="color" value={section.bodyColor || '#fff5e9'} onChange={(e) => updateSection(section.id, 'bodyColor', e.target.value)} /></label>
                 </div>
                 <label className="field">Body<textarea rows={3} value={section.body} onChange={(e) => updateSection(section.id, 'body', e.target.value)} /></label>
 
@@ -259,6 +329,18 @@ function App() {
                     <p className="text-sm font-semibold">Upload Videos</p>
                     <p className="text-xs opacity-70">MP4/WEBM/OGG, up to {MAX_VIDEO_MB}MB each.</p>
                     <input type="file" accept="video/mp4,video/webm,video/ogg" multiple onChange={(e) => uploadMedia(section.id, 'video', e.target.files)} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">Add Text in Media Area</p>
+                  <div className="flex gap-2">
+                    <input
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      placeholder="Write text to place in canvas"
+                      value={textDrafts[section.id] || ''}
+                      onChange={(e) => setTextDrafts((prev) => ({ ...prev, [section.id]: e.target.value }))}
+                    />
+                    <button type="button" className="action-btn" onClick={() => addCanvasText(section.id)}>Add Text</button>
                   </div>
                 </div>
 
@@ -278,8 +360,15 @@ function App() {
                     >
                       {item.type === 'photo' ? (
                         <img src={item.src} alt="Uploaded" className="w-full h-full object-cover rounded-md" />
-                      ) : (
+                      ) : item.type === 'video' ? (
                         <video controls className="w-full h-full rounded-md"><source src={item.src} type="video/mp4" /></video>
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center text-center px-2 rounded-md"
+                          style={{ color: item.color || '#ffffff', fontSize: `${item.fontSize || 24}px`, background: 'rgba(0,0,0,0.25)' }}
+                        >
+                          {item.text}
+                        </div>
                       )}
                     </div>
                   ))}
@@ -294,6 +383,13 @@ function App() {
                         <label className="field">Y %<input type="range" min="0" max="90" value={item.y} onChange={(e) => updateMedia(section.id, item.id, 'y', Number(e.target.value))} /></label>
                         <label className="field">Width %<input type="range" min="10" max="80" value={item.w} onChange={(e) => updateMedia(section.id, item.id, 'w', Number(e.target.value))} /></label>
                         <label className="field">Height %<input type="range" min="10" max="70" value={item.h} onChange={(e) => updateMedia(section.id, item.id, 'h', Number(e.target.value))} /></label>
+                        {item.type === 'text' && (
+                          <>
+                            <label className="field">Text<input value={item.text} onChange={(e) => updateMedia(section.id, item.id, 'text', e.target.value)} /></label>
+                            <label className="field">Text Color<input type="color" value={item.color || '#ffffff'} onChange={(e) => updateMedia(section.id, item.id, 'color', e.target.value)} /></label>
+                            <label className="field">Font Size<input type="range" min="14" max="72" value={item.fontSize || 24} onChange={(e) => updateMedia(section.id, item.id, 'fontSize', Number(e.target.value))} /></label>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -341,8 +437,8 @@ function App() {
                     <button type="button" className="action-btn" onClick={() => setIsMuted((v) => !v)}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
                   </>
                 )}
-                <h3 className="font-display text-4xl md:text-5xl">{section.title}</h3>
-                <p className="max-w-3xl mx-auto text-lg">{section.body}</p>
+                <h3 className="font-display text-4xl md:text-5xl" style={{ color: section.titleColor || '#ffffff' }}>{section.title}</h3>
+                <p className="max-w-3xl mx-auto text-lg" style={{ color: section.bodyColor || '#fff5e9' }}>{section.body}</p>
 
                 <div className="stage-output">
                   {section.media.map((item) => (
@@ -358,8 +454,15 @@ function App() {
                     >
                       {item.type === 'photo' ? (
                         <img src={item.src} alt="Wedding" className="w-full h-full object-cover rounded-xl shadow-lg" />
-                      ) : (
+                      ) : item.type === 'video' ? (
                         <video controls className="w-full h-full rounded-xl shadow-lg"><source src={item.src} type="video/mp4" /></video>
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center text-center px-3 rounded-xl shadow-lg"
+                          style={{ color: item.color || '#ffffff', fontSize: `${item.fontSize || 24}px`, background: 'rgba(0,0,0,0.22)' }}
+                        >
+                          {item.text}
+                        </div>
                       )}
                     </div>
                   ))}
