@@ -59,9 +59,9 @@ Open:
 
 ```bash
 docker build -t wedding-invite .
-docker run --rm -p 8080:80 wedding-invite
+docker run --rm -p 9080:9080 wedding-invite
 ```
 
 Open:
-- `http://localhost:8080/`
-- `http://localhost:8080/controlplane`
+- `http://localhost:9080/`
+- `http://localhost:9080/controlplane`
