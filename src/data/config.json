@@ -37,15 +37,15 @@
       "id": "welcome",
       "title": "Wedding Invitation",
       "body": "Join us as we begin our forever with love, traditions, and blessings.",
-      "photos": [],
-      "videos": []
+      "sectionColor": "#8d1324",
+      "media": []
     },
     {
       "id": "reception",
       "title": "Reception",
       "body": "Dinner and blessings ceremony follows the wedding rituals.",
-      "photos": [],
-      "videos": []
+      "sectionColor": "#b88925",
+      "media": []
     }
   ],
   "music": {

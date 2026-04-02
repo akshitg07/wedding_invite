@@ -2,22 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import config from './data/config.json';
 
-const STORAGE_KEY = 'wedding_invite_live_data_v3';
-
-const getInitialData = () => {
-  const fallback = {
-    themeKey: config.theme,
-    themeColors: config.themes[config.theme],
-    invitation: config.invitation,
-    sections: config.sections,
-  };
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? { ...fallback, ...JSON.parse(saved) } : fallback;
-  } catch {
-    return fallback;
-  }
-};
+const STORAGE_KEY = 'wedding_invite_live_data_v4';
+const MAX_IMAGE_MB = 8;
+const MAX_VIDEO_MB = 40;
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
 
 const tint = (hex, amount) => {
   const clean = hex.replace('#', '');
@@ -28,6 +17,55 @@ const tint = (hex, amount) => {
   return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
 };
 
+const normalizeSections = (sections) =>
+  sections.map((section, idx) => {
+    if (section.media) return section;
+
+    const photos = (section.photos || []).map((src, photoIdx) => ({
+      id: `${section.id}-photo-${photoIdx}`,
+      type: 'photo',
+      src,
+      x: 8 + (photoIdx % 3) * 30,
+      y: 28 + Math.floor(photoIdx / 3) * 24,
+      w: 24,
+      h: 20,
+    }));
+
+    const videos = (section.videos || []).map((src, videoIdx) => ({
+      id: `${section.id}-video-${videoIdx}`,
+      type: 'video',
+      src,
+      x: 8 + (videoIdx % 2) * 45,
+      y: 54,
+      w: 38,
+      h: 26,
+    }));
+
+    return {
+      ...section,
+      sectionColor: section.sectionColor || tint(config.themes[config.theme].primary, idx * 8),
+      media: [...photos, ...videos],
+    };
+  });
+
+const getInitialData = () => {
+  const fallback = {
+    themeKey: config.theme,
+    themeColors: config.themes[config.theme],
+    invitation: config.invitation,
+    sections: normalizeSections(config.sections),
+  };
+
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return fallback;
+    const parsed = JSON.parse(saved);
+    return { ...fallback, ...parsed, sections: normalizeSections(parsed.sections || fallback.sections) };
+  } catch {
+    return fallback;
+  }
+};
+
 function App() {
   const isControlPlane = window.location.pathname.startsWith('/controlplane');
   const [showIntro, setShowIntro] = useState(true);
@@ -35,8 +73,9 @@ function App() {
   const [data, setData] = useState(getInitialData);
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [newSectionBody, setNewSectionBody] = useState('');
-  const [dragState, setDragState] = useState(null);
+  const [dragMedia, setDragMedia] = useState(null);
   const [countdown, setCountdown] = useState('');
+  const [notice, setNotice] = useState('');
   const audioRef = useRef(null);
 
   const theme = useMemo(
@@ -80,14 +119,32 @@ function App() {
     }));
   };
 
+  const updateMedia = (sectionId, mediaId, key, value) => {
+    setData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((section) => {
+        if (section.id !== sectionId) return section;
+        return {
+          ...section,
+          media: section.media.map((item) => (item.id === mediaId ? { ...item, [key]: value } : item)),
+        };
+      }),
+    }));
+  };
+
   const addSection = () => {
     if (!newSectionTitle.trim()) return;
-    const newId = `section-${Date.now()}`;
     setData((prev) => ({
       ...prev,
       sections: [
         ...prev.sections,
-        { id: newId, title: newSectionTitle, body: newSectionBody, photos: [], videos: [] },
+        {
+          id: `section-${Date.now()}`,
+          title: newSectionTitle,
+          body: newSectionBody,
+          sectionColor: tint(prev.themeColors.primary, prev.sections.length * 10),
+          media: [],
+        },
       ],
     }));
     setNewSectionTitle('');
@@ -95,7 +152,22 @@ function App() {
   };
 
   const uploadMedia = async (sectionId, type, files) => {
-    const valid = Array.from(files || []);
+    const list = Array.from(files || []);
+    const allowTypes = type === 'photo' ? IMAGE_TYPES : VIDEO_TYPES;
+    const maxMb = type === 'photo' ? MAX_IMAGE_MB : MAX_VIDEO_MB;
+
+    const valid = list.filter((file) => {
+      const okType = allowTypes.includes(file.type);
+      const okSize = file.size <= maxMb * 1024 * 1024;
+      return okType && okSize;
+    });
+
+    if (valid.length !== list.length) {
+      setNotice(`Some ${type} files were skipped (allowed types + max ${maxMb}MB).`);
+    } else {
+      setNotice('');
+    }
+
     const encoded = await Promise.all(
       valid.map(
         (file) =>
@@ -111,30 +183,29 @@ function App() {
       ...prev,
       sections: prev.sections.map((section) => {
         if (section.id !== sectionId) return section;
-        const key = type === 'photo' ? 'photos' : 'videos';
-        return { ...section, [key]: [...section[key], ...encoded] };
+        const next = encoded.map((src, idx) => ({
+          id: `${sectionId}-${type}-${Date.now()}-${idx}`,
+          type,
+          src,
+          x: 8 + (idx % 3) * 26,
+          y: type === 'photo' ? 28 : 58,
+          w: type === 'photo' ? 24 : 38,
+          h: type === 'photo' ? 20 : 26,
+        }));
+        return { ...section, media: [...section.media, ...next] };
       }),
     }));
   };
 
-  const onDragStart = (sectionId, type, index) => {
-    setDragState({ sectionId, type, index });
-  };
-
-  const onDropMedia = (sectionId, type, targetIndex) => {
-    if (!dragState || dragState.sectionId !== sectionId || dragState.type !== type) return;
-    setData((prev) => ({
-      ...prev,
-      sections: prev.sections.map((section) => {
-        if (section.id !== sectionId) return section;
-        const key = type === 'photo' ? 'photos' : 'videos';
-        const arr = [...section[key]];
-        const [moved] = arr.splice(dragState.index, 1);
-        arr.splice(targetIndex, 0, moved);
-        return { ...section, [key]: arr };
-      }),
-    }));
-    setDragState(null);
+  const dropOnCanvas = (e, sectionId) => {
+    e.preventDefault();
+    if (!dragMedia || dragMedia.sectionId !== sectionId) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    updateMedia(sectionId, dragMedia.mediaId, 'x', Math.max(0, Math.min(90, Number(x.toFixed(2)))));
+    updateMedia(sectionId, dragMedia.mediaId, 'y', Math.max(0, Math.min(90, Number(y.toFixed(2)))));
+    setDragMedia(null);
   };
 
   return (
@@ -149,7 +220,8 @@ function App() {
                 <h2 className="font-display text-2xl" style={{ color: theme.primary }}>Control Plane</h2>
                 <a href="/" className="underline" style={{ color: theme.primary }}>Go to Invitation</a>
               </div>
-              <p className="text-sm mt-2">Edit all sections, upload media from your browser, and drag to rearrange media placement.</p>
+              <p className="text-sm mt-2">Set section colors, upload media from browser, drag and place items in canvas, and resize with sliders.</p>
+              {notice && <p className="mt-2 text-sm text-red-700">{notice}</p>}
             </div>
 
             <div className="panel grid md:grid-cols-2 gap-4">
@@ -171,48 +243,60 @@ function App() {
             {data.sections.map((section) => (
               <div key={section.id} className="panel space-y-4">
                 <h3 className="font-display text-xl" style={{ color: theme.primary }}>{section.title || 'Untitled Section'}</h3>
-                <label className="field">Title<input value={section.title} onChange={(e) => updateSection(section.id, 'title', e.target.value)} /></label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <label className="field">Title<input value={section.title} onChange={(e) => updateSection(section.id, 'title', e.target.value)} /></label>
+                  <label className="field">Section Color<input type="color" value={section.sectionColor} onChange={(e) => updateSection(section.id, 'sectionColor', e.target.value)} /></label>
+                </div>
                 <label className="field">Body<textarea rows={3} value={section.body} onChange={(e) => updateSection(section.id, 'body', e.target.value)} /></label>
 
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold">Upload Photos (browser upload)</p>
-                    <input type="file" accept="image/*" multiple onChange={(e) => uploadMedia(section.id, 'photo', e.target.files)} />
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {section.photos.map((src, index) => (
-                        <img
-                          key={`${src.slice(0, 20)}-${index}`}
-                          src={src}
-                          alt="Uploaded"
-                          draggable
-                          onDragStart={() => onDragStart(section.id, 'photo', index)}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => onDropMedia(section.id, 'photo', index)}
-                          className="drag-item h-24 w-full object-cover rounded-md"
-                        />
-                      ))}
-                    </div>
+                  <div>
+                    <p className="text-sm font-semibold">Upload Photos</p>
+                    <p className="text-xs opacity-70">JPG/PNG/WEBP, up to {MAX_IMAGE_MB}MB each.</p>
+                    <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => uploadMedia(section.id, 'photo', e.target.files)} />
                   </div>
+                  <div>
+                    <p className="text-sm font-semibold">Upload Videos</p>
+                    <p className="text-xs opacity-70">MP4/WEBM/OGG, up to {MAX_VIDEO_MB}MB each.</p>
+                    <input type="file" accept="video/mp4,video/webm,video/ogg" multiple onChange={(e) => uploadMedia(section.id, 'video', e.target.files)} />
+                  </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold">Upload Videos (browser upload)</p>
-                    <input type="file" accept="video/*" multiple onChange={(e) => uploadMedia(section.id, 'video', e.target.files)} />
-                    <div className="grid grid-cols-1 gap-2">
-                      {section.videos.map((src, index) => (
-                        <video
-                          key={`${src.slice(0, 20)}-${index}`}
-                          controls
-                          draggable
-                          onDragStart={() => onDragStart(section.id, 'video', index)}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => onDropMedia(section.id, 'video', index)}
-                          className="drag-item rounded-md"
-                        >
-                          <source src={src} type="video/mp4" />
-                        </video>
-                      ))}
+                <div className="canvas" onDragOver={(e) => e.preventDefault()} onDrop={(e) => dropOnCanvas(e, section.id)}>
+                  {section.media.map((item) => (
+                    <div
+                      key={item.id}
+                      className="absolute media-item"
+                      draggable
+                      onDragStart={() => setDragMedia({ sectionId: section.id, mediaId: item.id })}
+                      style={{
+                        left: `${item.x}%`,
+                        top: `${item.y}%`,
+                        width: `${item.w}%`,
+                        height: `${item.h}%`,
+                      }}
+                    >
+                      {item.type === 'photo' ? (
+                        <img src={item.src} alt="Uploaded" className="w-full h-full object-cover rounded-md" />
+                      ) : (
+                        <video controls className="w-full h-full rounded-md"><source src={item.src} type="video/mp4" /></video>
+                      )}
                     </div>
-                  </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  {section.media.map((item) => (
+                    <div key={`${item.id}-controls`} className="media-controls">
+                      <p className="text-xs font-semibold">{item.type.toUpperCase()} ({item.id})</p>
+                      <div className="grid md:grid-cols-4 gap-2">
+                        <label className="field">X %<input type="range" min="0" max="90" value={item.x} onChange={(e) => updateMedia(section.id, item.id, 'x', Number(e.target.value))} /></label>
+                        <label className="field">Y %<input type="range" min="0" max="90" value={item.y} onChange={(e) => updateMedia(section.id, item.id, 'y', Number(e.target.value))} /></label>
+                        <label className="field">Width %<input type="range" min="10" max="80" value={item.w} onChange={(e) => updateMedia(section.id, item.id, 'w', Number(e.target.value))} /></label>
+                        <label className="field">Height %<input type="range" min="10" max="70" value={item.h} onChange={(e) => updateMedia(section.id, item.id, 'h', Number(e.target.value))} /></label>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -244,47 +328,45 @@ function App() {
             )}
           </AnimatePresence>
 
-          {data.sections.map((section, idx) => {
-            const bg = tint(idx % 2 === 0 ? theme.primary : theme.secondary, idx % 3 === 0 ? 10 : -10);
-            return (
-              <section key={section.id} className="min-h-screen px-4 py-10 md:py-16" style={{ backgroundColor: bg }}>
-                <div className="max-w-5xl mx-auto text-center text-white space-y-5">
-                  {idx === 0 && (
-                    <>
-                      <div className="flex justify-end">
-                        <a href="/controlplane" className="underline text-sm">Open Control Plane</a>
-                      </div>
-                      <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.familiesLine}</p>
-                      <h2 className="font-script text-6xl md:text-8xl">{data.invitation.bride} & {data.invitation.groom}</h2>
-                      <p className="text-xl">{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                      <p>{data.invitation.time} • {data.invitation.venue}</p>
-                      <p className="text-sm">{countdown}</p>
-                      <button type="button" className="action-btn" onClick={() => setIsMuted((v) => !v)}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
-                    </>
-                  )}
+          {data.sections.map((section, idx) => (
+            <section key={section.id} className="min-h-screen px-4 py-10 md:py-16" style={{ backgroundColor: section.sectionColor || tint(theme.primary, idx * 8) }}>
+              <div className="max-w-5xl mx-auto text-center text-white space-y-5 relative">
+                {idx === 0 && (
+                  <>
+                    <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.familiesLine}</p>
+                    <h2 className="font-script text-6xl md:text-8xl">{data.invitation.bride} & {data.invitation.groom}</h2>
+                    <p className="text-xl">{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    <p>{data.invitation.time} • {data.invitation.venue}</p>
+                    <p className="text-sm">{countdown}</p>
+                    <button type="button" className="action-btn" onClick={() => setIsMuted((v) => !v)}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
+                  </>
+                )}
+                <h3 className="font-display text-4xl md:text-5xl">{section.title}</h3>
+                <p className="max-w-3xl mx-auto text-lg">{section.body}</p>
 
-                  <h3 className="font-display text-4xl md:text-5xl">{section.title}</h3>
-                  <p className="max-w-3xl mx-auto text-lg">{section.body}</p>
-
-                  {section.photos.length > 0 && (
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-                      {section.photos.map((src, i) => <img key={`${src.slice(0, 20)}-${i}`} src={src} alt="Wedding" className="w-full h-56 object-cover rounded-xl" />)}
+                <div className="stage-output">
+                  {section.media.map((item) => (
+                    <div
+                      key={item.id}
+                      className="absolute"
+                      style={{
+                        left: `${item.x}%`,
+                        top: `${item.y}%`,
+                        width: `${item.w}%`,
+                        height: `${item.h}%`,
+                      }}
+                    >
+                      {item.type === 'photo' ? (
+                        <img src={item.src} alt="Wedding" className="w-full h-full object-cover rounded-xl shadow-lg" />
+                      ) : (
+                        <video controls className="w-full h-full rounded-xl shadow-lg"><source src={item.src} type="video/mp4" /></video>
+                      )}
                     </div>
-                  )}
-
-                  {section.videos.length > 0 && (
-                    <div className="grid md:grid-cols-2 gap-4 pt-2">
-                      {section.videos.map((src, i) => (
-                        <video key={`${src.slice(0, 20)}-${i}`} controls className="w-full rounded-xl">
-                          <source src={src} type="video/mp4" />
-                        </video>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
-              </section>
-            );
-          })}
+              </div>
+            </section>
+          ))}
         </main>
       )}
     </div>

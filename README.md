@@ -7,14 +7,26 @@ A scrollable Indian wedding invitation website with full-screen themed sections 
 - `/` → public invitation webpage
 - `/controlplane` → control panel webpage
 
-## What changed
+## Control Plane capabilities
 
-- Invitation sections are now full-screen and seamless (no card/box partitions)
-- Each section uses a different shade in the Royal Red & Gold theme family
-- Control panel can edit all existing sections (title/body)
-- You can add new sections dynamically
-- You can upload photos/videos directly from your browser for any section
-- Uploaded media can be reordered with drag-and-drop within each section
+- Edit all section titles, descriptions, and **section colors**
+- Add new sections dynamically
+- Upload photos/videos **from browser only** for each section
+- Drag-and-place photos/videos anywhere in the section canvas
+- Resize placed media using width/height sliders
+- Edit media placement precisely with X/Y sliders
+
+## Upload constraints
+
+### Images
+- Supported extensions/types: `.jpg`, `.jpeg`, `.png`, `.webp`
+- Max image size: **8 MB per file**
+
+### Videos
+- Supported extensions/types: `.mp4`, `.webm`, `.ogg`
+- Max video size: **40 MB per file**
+
+Files outside these constraints are skipped during upload.
 
 ## Persistence
 
