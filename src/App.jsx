@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import config from './data/config.json';
 
 const STORAGE_KEY = 'wedding_invite_live_data_v4';
+const CONTROL_PANEL_PASSWORD = 'disha&akshit@2106';
+const CONTROL_UNLOCK_KEY = 'wedding_invite_control_unlocked';
 const MAX_IMAGE_MB = 15;
 const MAX_VIDEO_MB = 40;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -133,6 +135,11 @@ function App() {
   const [countdown, setCountdown] = useState('');
   const [notice, setNotice] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [savedSnapshot, setSavedSnapshot] = useState('');
+  const [controlPassword, setControlPassword] = useState('');
+  const [controlUnlocked, setControlUnlocked] = useState(
+    () => sessionStorage.getItem(CONTROL_UNLOCK_KEY) === 'true'
+  );
   const audioRef = useRef(null);
 
   const theme = useMemo(
@@ -141,10 +148,37 @@ function App() {
   );
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) || '';
     const current = JSON.stringify(data);
-    setIsDirty(saved !== current);
-  }, [data]);
+    setIsDirty(Boolean(savedSnapshot) && savedSnapshot !== current);
+  }, [data, savedSnapshot]);
+
+  useEffect(() => {
+    const bootstrapState = async () => {
+      try {
+        const res = await fetch('/api/state');
+        if (!res.ok) throw new Error('Unable to fetch server state');
+        const payload = await res.json();
+        if (payload?.state) {
+          const merged = {
+            ...getInitialData(),
+            ...payload.state,
+            sections: normalizeSections(payload.state.sections || getInitialData().sections),
+          };
+          setData(merged);
+          setSavedSnapshot(JSON.stringify(merged));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          return;
+        }
+      } catch {
+        setNotice('Server state not reachable. Using local browser data.');
+      }
+
+      const local = localStorage.getItem(STORAGE_KEY);
+      if (local) setSavedSnapshot(local);
+    };
+
+    bootstrapState();
+  }, []);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -334,13 +368,29 @@ function App() {
   };
 
   const saveData = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      setNotice('Saved successfully. Your changes persist in this browser even after restart.');
-      setIsDirty(false);
-    } catch {
-      setNotice('Save failed: browser storage limit reached. Remove some large media and try again.');
-    }
+    const persist = async () => {
+      const snapshot = JSON.stringify(data);
+      try {
+        const res = await fetch('/api/state', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: snapshot,
+        });
+        if (!res.ok) throw new Error('Failed to persist on server');
+        localStorage.setItem(STORAGE_KEY, snapshot);
+        setSavedSnapshot(snapshot);
+        setNotice('Saved to server. Everyone using this link sees latest pushed changes.');
+      } catch {
+        try {
+          localStorage.setItem(STORAGE_KEY, snapshot);
+          setSavedSnapshot(snapshot);
+          setNotice('Server save failed. Saved locally in this browser only.');
+        } catch {
+          setNotice('Save failed: browser storage limit reached. Remove some large media and try again.');
+        }
+      }
+    };
+    persist();
   };
 
   const dropOnCanvas = (e, sectionId) => {
@@ -359,12 +409,53 @@ function App() {
       <audio ref={audioRef} src={data.musicUrl || config.music.url} loop autoPlay playsInline />
 
       {isControlPlane ? (
+        !controlUnlocked ? (
+          <main className="control-bg min-h-screen flex items-center justify-center px-4">
+            <div className="panel w-full max-w-md space-y-4">
+              <h2 className="font-display text-2xl" style={{ color: theme.primary }}>Control Plane Locked</h2>
+              <p className="text-sm">Enter password to access control panel.</p>
+              <input
+                type="password"
+                value={controlPassword}
+                onChange={(e) => setControlPassword(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2"
+                placeholder="Enter password"
+              />
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => {
+                  if (controlPassword === CONTROL_PANEL_PASSWORD) {
+                    sessionStorage.setItem(CONTROL_UNLOCK_KEY, 'true');
+                    setControlUnlocked(true);
+                    setNotice('');
+                    return;
+                  }
+                  setNotice('Incorrect password for control plane.');
+                }}
+              >
+                Unlock
+              </button>
+              {notice && <p className="text-sm text-red-700">{notice}</p>}
+            </div>
+          </main>
+        ) : (
         <main className="control-bg min-h-screen px-4 py-8">
           <div className="max-w-6xl mx-auto space-y-5">
             <div className="panel">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <h2 className="font-display text-2xl" style={{ color: theme.primary }}>Control Plane</h2>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="action-btn"
+                    onClick={() => {
+                      sessionStorage.removeItem(CONTROL_UNLOCK_KEY);
+                      setControlUnlocked(false);
+                    }}
+                  >
+                    Lock
+                  </button>
                   <button type="button" className="action-btn" onClick={saveData}>
                     {isDirty ? 'Save Changes' : 'Saved'}
                   </button>
@@ -516,6 +607,7 @@ function App() {
             ))}
           </div>
         </main>
+        )
       ) : (
         <main>
           <AnimatePresence>

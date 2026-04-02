@@ -5,7 +5,9 @@ A scrollable Indian wedding invitation website with full-screen themed sections 
 ## Pages
 
 - `/` → public invitation webpage
-- `/controlplane` → control panel webpage
+- `/controlplane` → password-protected control panel webpage
+
+Control plane password: `disha&akshit@2106`
 
 ## Control Plane capabilities
 
@@ -40,7 +42,7 @@ Files outside these constraints are skipped during upload.
 
 ## Persistence
 
-Saved control-plane data is stored in browser `localStorage` and persists across page refreshes, Docker restarts, and machine reboots (same browser profile/device).
+Saved control-plane data is pushed to the server container (`/api/state`) and written to `/data/invitation-state.json`. This is shared for anyone opening the same link and persists across container/machine restarts when the Docker volume is mounted (`./data:/data`).
 
 ## Run
 

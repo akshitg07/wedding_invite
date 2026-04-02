@@ -9,9 +9,16 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-FROM nginx:1.27-alpine AS runtime
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+FROM node:20-alpine AS runtime
+WORKDIR /app
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/server ./server
+COPY --from=build /app/package*.json ./
+RUN npm install --omit=dev
+
+ENV PORT=9080
+ENV STATE_FILE=/data/invitation-state.json
+EXPOSE 8080
+
+CMD ["npm", "run", "start"]
