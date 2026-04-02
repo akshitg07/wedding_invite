@@ -1,45 +1,43 @@
 # Indian Traditional Wedding Invitation (React + Tailwind + Framer Motion)
 
-A modern, scrollable Indian wedding invitation website with royal aesthetics, mandala-inspired decor, media sections, and a separate control plane page.
+A scrollable Indian wedding invitation website with full-screen themed sections and a separate `/controlplane` editor.
 
 ## Pages
 
-- `/` → public invitation page
-- `/controlplane` → admin/control page for live content editing
+- `/` → public invitation webpage
+- `/controlplane` → control panel webpage
 
-## Features
+## What changed
 
-- Separate **Control Plane** webpage at `/controlplane`
-- Edit bride/groom names, venue, date, and theme colors
-- Two theme presets only: **Royal Red** and **Rose Gold**
-- Add image URLs to gallery and video URLs to video clips section
-- Add unlimited custom sections from control plane (rendered on invitation page)
-- Smooth intro screen (`Shubh Vivaah`) and soft petal animation
-- Scrollable single-page invitation layout with low visual partitioning
-- Background music with mute/unmute control
+- Invitation sections are now full-screen and seamless (no card/box partitions)
+- Each section uses a different shade in the Royal Red & Gold theme family
+- Control panel can edit all existing sections (title/body)
+- You can add new sections dynamically
+- You can upload photos/videos directly from your browser for any section
+- Uploaded media can be reordered with drag-and-drop within each section
 
-## Data Persistence
+## Persistence
 
-Changes from `/controlplane` are saved to browser `localStorage` and reflected on `/`.
+All control panel changes are saved in browser `localStorage` and used by `/`.
 
-## Run Locally
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open:
+Open:
 - `http://localhost:5173/`
 - `http://localhost:5173/controlplane`
 
-## Run with Docker
+## Docker
 
 ```bash
 docker build -t wedding-invite .
 docker run --rm -p 8080:80 wedding-invite
 ```
 
-Then open:
+Open:
 - `http://localhost:8080/`
 - `http://localhost:8080/controlplane`

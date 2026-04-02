@@ -11,13 +11,15 @@ body {
   min-height: 100vh;
 }
 
-.soft-panel {
-  background-image:
-    radial-gradient(circle at top right, rgba(212, 175, 55, 0.1) 0, transparent 35%),
-    radial-gradient(circle at bottom left, rgba(139, 26, 26, 0.08) 0, transparent 40%);
-  background-color: rgba(255, 252, 248, 0.9);
-  border-radius: 20px;
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.12);
+.control-bg {
+  background: linear-gradient(180deg, #f5ebe6, #fdf8f4);
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 .action-btn {
@@ -38,11 +40,7 @@ body {
   background-color: rgba(255, 255, 255, 0.92);
 }
 
-.petal {
-  position: absolute;
-  top: 0;
-  width: 10px;
-  height: 14px;
-  background: linear-gradient(180deg, rgba(255, 211, 185, 0.8), rgba(223, 123, 114, 0.6));
-  border-radius: 50% 50% 50% 0;
+.drag-item {
+  cursor: grab;
+  border: 2px dashed rgba(122, 13, 27, 0.35);
 }

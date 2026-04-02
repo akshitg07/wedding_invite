@@ -32,20 +32,23 @@
     "message": "With blessings and joy, the Sharma and Iyer families invite you to celebrate this sacred union and shower the couple with your love.",
     "from": "Warm regards, Sharma & Iyer Families"
   },
-  "images": [
-    "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?auto=format&fit=crop&w=1000&q=80",
-    "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1000&q=80"
-  ],
-  "videos": [
-    "https://www.w3schools.com/html/mov_bbb.mp4"
+  "sections": [
+    {
+      "id": "welcome",
+      "title": "Wedding Invitation",
+      "body": "Join us as we begin our forever with love, traditions, and blessings.",
+      "photos": [],
+      "videos": []
+    },
+    {
+      "id": "reception",
+      "title": "Reception",
+      "body": "Dinner and blessings ceremony follows the wedding rituals.",
+      "photos": [],
+      "videos": []
+    }
   ],
   "music": {
     "url": "https://cdn.pixabay.com/download/audio/2022/10/30/audio_c6f8ca11ee.mp3?filename=indian-background-126080.mp3"
-  },
-  "sections": [
-    {
-      "title": "Reception",
-      "body": "Dinner and blessings ceremony follows the wedding rituals."
-    }
-  ]
+  }
 }
