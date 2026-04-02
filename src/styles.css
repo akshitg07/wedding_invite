@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Playfair Display', serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.control-bg {
+  background: linear-gradient(180deg, #f5ebe6, #fdf8f4);
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.action-btn {
+  @apply rounded-full px-4 py-2 text-sm font-semibold transition;
+  background: linear-gradient(135deg, #d4af37, #f3d98f);
+  color: #3f2506;
+}
+
+.field {
+  @apply text-sm font-medium flex flex-col gap-1;
+}
+
+.field input,
+.field select,
+.field textarea {
+  @apply rounded-lg border px-3 py-2 text-sm;
+  border-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.92);
+}
+
+.drag-item {
+  cursor: grab;
+  border: 2px dashed rgba(122, 13, 27, 0.35);
+}
