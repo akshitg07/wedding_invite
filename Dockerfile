@@ -17,7 +17,7 @@ COPY --from=build /app/server ./server
 COPY --from=build /app/package*.json ./
 RUN npm install --omit=dev
 
-ENV PORT=8080
+ENV PORT=9080
 ENV STATE_FILE=/data/invitation-state.json
 EXPOSE 8080
 
