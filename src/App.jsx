@@ -2,89 +2,67 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import config from './data/config.json';
 
-const floatingPetals = Array.from({ length: 12 }, (_, i) => i);
-
-function toGoogleCalendarLink({ title, details, location, startDate, durationMinutes }) {
-  const start = new Date(`${startDate}T18:30:00`);
-  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
-
-  const fmt = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: title,
-    details,
-    location,
-    dates: `${fmt(start)}/${fmt(end)}`,
-  });
-
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
+const petals = Array.from({ length: 10 }, (_, i) => i);
 
 function App() {
-  const [themeKey, setThemeKey] = useState(config.theme);
   const [showIntro, setShowIntro] = useState(true);
-  const [photoIndex, setPhotoIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const [themeKey, setThemeKey] = useState(config.theme);
+  const [themeColors, setThemeColors] = useState(config.themes[config.theme]);
+  const [invitation, setInvitation] = useState(config.invitation);
+  const [images, setImages] = useState(config.images);
+  const [videos, setVideos] = useState(config.videos);
+  const [newImage, setNewImage] = useState('');
+  const [newVideo, setNewVideo] = useState('');
   const [countdown, setCountdown] = useState('');
-  const [petalsEnabled, setPetalsEnabled] = useState(config.animations.petals);
   const audioRef = useRef(null);
 
-  const theme = config.themes[themeKey];
-  const weddingDate = new Date(`${config.invitation.date}T18:30:00`);
+  const theme = useMemo(
+    () => ({ ...config.themes[themeKey], ...themeColors }),
+    [themeKey, themeColors]
+  );
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const diff = weddingDate.getTime() - now.getTime();
-
-      if (diff <= 0) {
-        setCountdown('The celebration has begun!');
-        return;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const mins = Math.floor((diff / (1000 * 60)) % 60);
-      setCountdown(`${days} days, ${hours} hrs, ${mins} mins to go`);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [weddingDate]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPhotoIndex((prev) => (prev + 1) % config.images.length);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+    setThemeColors(config.themes[themeKey]);
+  }, [themeKey]);
 
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.muted = isMuted;
   }, [isMuted]);
 
-  const calendarLink = useMemo(
-    () =>
-      toGoogleCalendarLink({
-        title: config.calendar.title,
-        details: config.calendar.details,
-        location: config.invitation.venue,
-        startDate: config.invitation.date,
-        durationMinutes: config.calendar.durationMinutes,
-      }),
-    []
-  );
+  useEffect(() => {
+    const weddingDate = new Date(`${invitation.date}T18:30:00`);
+    const timer = setInterval(() => {
+      const diff = weddingDate.getTime() - Date.now();
+      if (diff <= 0) {
+        setCountdown('The wedding celebrations have started!');
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hrs = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const mins = Math.floor((diff / (1000 * 60)) % 60);
+      setCountdown(`${days} days ${hrs} hrs ${mins} mins remaining`);
+    }, 1000);
 
-  const whatsappLink = useMemo(() => {
-    const text = `${config.share.text} ${window.location.href}`;
-    return `https://wa.me/?text=${encodeURIComponent(text)}`;
-  }, []);
+    return () => clearInterval(timer);
+  }, [invitation.date]);
+
+  const addImage = () => {
+    if (!newImage.trim()) return;
+    setImages((prev) => [...prev, newImage.trim()]);
+    setNewImage('');
+  };
+
+  const addVideo = () => {
+    if (!newVideo.trim()) return;
+    setVideos((prev) => [...prev, newVideo.trim()]);
+    setNewVideo('');
+  };
 
   return (
     <div
-      className="min-h-screen px-4 py-10 md:py-12 relative overflow-hidden"
+      className="min-h-screen relative"
       style={{
         backgroundColor: theme.background,
         color: theme.text,
@@ -92,182 +70,154 @@ function App() {
     >
       <audio ref={audioRef} src={config.music.url} loop autoPlay playsInline />
 
-      {petalsEnabled && (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          {floatingPetals.map((petal) => (
-            <motion.span
-              key={petal}
-              className="petal"
-              initial={{ y: -100, x: `${petal * 8}%`, opacity: 0.2 }}
-              animate={{ y: '105vh', rotate: 360, opacity: [0.15, 0.3, 0.1] }}
-              transition={{ duration: 10 + petal, repeat: Infinity, ease: 'linear', delay: petal * 0.8 }}
-            />
-          ))}
-        </div>
-      )}
+      <div className="pointer-events-none fixed inset-0 opacity-70" aria-hidden="true">
+        {petals.map((id) => (
+          <motion.span
+            key={id}
+            className="petal"
+            initial={{ y: -120, x: `${id * 10}%` }}
+            animate={{ y: '105vh', rotate: 360 }}
+            transition={{ duration: 10 + id, repeat: Infinity, ease: 'linear', delay: id * 0.6 }}
+          />
+        ))}
+      </div>
 
       <AnimatePresence>
         {showIntro && (
           <motion.div
-            className="fixed inset-0 z-20 flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.78)' }}
-            initial={{ opacity: 1 }}
+            className="fixed inset-0 z-30 flex items-center justify-center px-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
             onClick={() => {
               setShowIntro(false);
               setIsMuted(false);
             }}
           >
             <motion.div
-              className="text-center px-8 py-10 rounded-2xl border"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center p-8 rounded-2xl border"
               style={{ borderColor: theme.secondary, backgroundColor: theme.cardBackground }}
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
             >
-              <p className="tracking-[0.3em] uppercase text-xs md:text-sm">Save the Date</p>
-              <h1 className="font-script text-6xl md:text-7xl mt-4" style={{ color: theme.primary }}>
+              <p className="uppercase tracking-[0.3em] text-xs">Save The Date</p>
+              <h1 className="font-script text-6xl mt-3" style={{ color: theme.primary }}>
                 {config.introText}
               </h1>
-              <p className="mt-4 text-sm">Tap to open invitation</p>
+              <p className="mt-3 text-sm">Tap to open your invitation website</p>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="max-w-5xl mx-auto">
-        <motion.div
-          className="invite-card border-4 p-4 md:p-8 lg:p-10 rounded-3xl relative"
-          style={{
-            borderColor: theme.secondary,
-            backgroundColor: theme.cardBackground,
-            boxShadow: `0 0 0 4px ${theme.accent}, 0 18px 40px rgba(0,0,0,0.25)`,
-          }}
-          initial={config.animations.entry ? { opacity: 0, scale: 0.92 } : false}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9 }}
-        >
-          <div className="decor decor-left" style={{ borderColor: theme.secondary }} />
-          <div className="decor decor-right" style={{ borderColor: theme.secondary }} />
+      <main className="relative z-10 max-w-6xl mx-auto px-4 py-8 md:py-12 space-y-8">
+        <section className="rounded-2xl border p-5 md:p-6" style={{ backgroundColor: theme.cardBackground, borderColor: theme.secondary }}>
+          <h2 className="font-display text-2xl mb-4" style={{ color: theme.primary }}>
+            Control Panel
+          </h2>
+          <p className="text-sm mb-4">Edit names, venue, date, theme colors, and add picture/video URLs.</p>
 
-          <div className="text-center space-y-4 relative z-10">
-            <p className="tracking-[0.25em] uppercase text-xs md:text-sm" style={{ color: theme.primary }}>
-              {config.invitation.familiesLine}
-            </p>
-            <h2 className="font-script text-6xl md:text-7xl leading-tight" style={{ color: theme.primary }}>
-              {config.invitation.bride}
-              <span className="mx-3 font-display text-3xl md:text-4xl" style={{ color: theme.secondary }}>
-                &
-              </span>
-              {config.invitation.groom}
-            </h2>
-            <p className="font-display text-lg md:text-xl">request the pleasure of your graceful presence</p>
-            <p className="font-display text-lg md:text-2xl" style={{ color: theme.primary }}>
-              {new Date(config.invitation.date).toLocaleDateString('en-IN', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-              <span className="block text-base md:text-xl mt-1">{config.invitation.time}</span>
-            </p>
-
-            <p className="mx-auto max-w-2xl text-sm md:text-base">{config.invitation.message}</p>
-            <p className="font-medium">{config.invitation.from}</p>
-          </div>
-
-          <div className="grid gap-6 mt-8 lg:grid-cols-2 relative z-10">
-            <div className="rounded-2xl border p-4" style={{ borderColor: theme.secondary }}>
-              <h3 className="font-display text-xl mb-2" style={{ color: theme.primary }}>
-                Venue
-              </h3>
-              <p>{config.invitation.venue}</p>
-              <a
-                className="inline-block mt-3 underline"
-                href={config.invitation.mapsUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: theme.primary }}
-              >
-                Open in Google Maps
-              </a>
-
-              <div className="mt-4 space-y-2 text-sm">
-                <p className="font-semibold">Countdown</p>
-                <p>{countdown}</p>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-3">
-                <a className="action-btn" href={calendarLink} target="_blank" rel="noreferrer">
-                  Add to Calendar
-                </a>
-                <a className="action-btn" href={whatsappLink} target="_blank" rel="noreferrer">
-                  Share on WhatsApp
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-display text-xl mb-3" style={{ color: theme.primary }}>
-                Wedding Moments
-              </h3>
-              <motion.div
-                key={config.images[photoIndex].src}
-                className="image-frame"
-                initial={{ opacity: 0.4, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6 }}
-              >
-                <img
-                  src={config.images[photoIndex].src}
-                  alt={config.images[photoIndex].alt}
-                  className="h-64 md:h-72 w-full object-cover rounded-xl"
-                />
-              </motion.div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {config.images.map((img, idx) => (
-                  <button
-                    type="button"
-                    key={img.src}
-                    onClick={() => setPhotoIndex(idx)}
-                    className={`thumb ${idx === photoIndex ? 'active' : ''}`}
-                    aria-label={`View photo ${idx + 1}`}
-                  >
-                    <img src={img.src} alt={img.alt} className="h-20 w-full object-cover rounded-md" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 relative z-10">
-            <label className="text-sm font-medium" htmlFor="themePicker">
-              Theme:
+          <div className="grid md:grid-cols-2 gap-4">
+            <label className="field">Bride Name
+              <input value={invitation.bride} onChange={(e) => setInvitation({ ...invitation, bride: e.target.value })} />
             </label>
-            <select
-              id="themePicker"
-              value={themeKey}
-              onChange={(e) => setThemeKey(e.target.value)}
-              className="rounded-lg border px-3 py-2 text-sm"
-            >
-              {Object.entries(config.themes).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value.name}
-                </option>
-              ))}
-            </select>
+            <label className="field">Groom Name
+              <input value={invitation.groom} onChange={(e) => setInvitation({ ...invitation, groom: e.target.value })} />
+            </label>
+            <label className="field">Venue
+              <input value={invitation.venue} onChange={(e) => setInvitation({ ...invitation, venue: e.target.value })} />
+            </label>
+            <label className="field">Date
+              <input type="date" value={invitation.date} onChange={(e) => setInvitation({ ...invitation, date: e.target.value })} />
+            </label>
+          </div>
 
-            <button type="button" className="action-btn" onClick={() => setIsMuted((v) => !v)}>
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <label className="field">Theme Preset
+              <select value={themeKey} onChange={(e) => setThemeKey(e.target.value)}>
+                <option value="royalRed">Royal Red</option>
+                <option value="roseGold">Rose Gold</option>
+              </select>
+            </label>
+            <label className="field">Primary Color
+              <input type="color" value={themeColors.primary} onChange={(e) => setThemeColors({ ...themeColors, primary: e.target.value })} />
+            </label>
+            <label className="field">Secondary Color
+              <input type="color" value={themeColors.secondary} onChange={(e) => setThemeColors({ ...themeColors, secondary: e.target.value })} />
+            </label>
+            <label className="field">Card Background
+              <input type="color" value={themeColors.cardBackground} onChange={(e) => setThemeColors({ ...themeColors, cardBackground: e.target.value })} />
+            </label>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <div className="space-y-2">
+              <label className="field">Add Picture URL
+                <input value={newImage} onChange={(e) => setNewImage(e.target.value)} placeholder="https://..." />
+              </label>
+              <button className="action-btn" type="button" onClick={addImage}>Add Picture</button>
+            </div>
+            <div className="space-y-2">
+              <label className="field">Add Video URL
+                <input value={newVideo} onChange={(e) => setNewVideo(e.target.value)} placeholder="https://...mp4" />
+              </label>
+              <button className="action-btn" type="button" onClick={addVideo}>Add Video</button>
+            </div>
+          </div>
+        </section>
+
+        <section className="invite-card rounded-3xl border-4 p-5 md:p-8" style={{ borderColor: theme.secondary, backgroundColor: theme.cardBackground }}>
+          <div className="text-center space-y-3">
+            <p className="uppercase tracking-[0.25em] text-xs" style={{ color: theme.primary }}>{invitation.familiesLine}</p>
+            <h2 className="font-script text-6xl md:text-7xl" style={{ color: theme.primary }}>
+              {invitation.bride} <span className="font-display text-3xl">&</span> {invitation.groom}
+            </h2>
+            <p className="text-lg">request the honor of your presence</p>
+            <p className="text-xl" style={{ color: theme.primary }}>
+              {new Date(invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            <p>{invitation.time}</p>
+            <p className="max-w-3xl mx-auto">{invitation.message}</p>
+            <p className="font-semibold">{invitation.from}</p>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border p-5" style={{ borderColor: theme.secondary, backgroundColor: theme.cardBackground }}>
+          <h3 className="font-display text-2xl mb-3" style={{ color: theme.primary }}>Event Details</h3>
+          <p>{invitation.venue}</p>
+          <a href={invitation.mapsUrl} target="_blank" rel="noreferrer" className="underline mt-2 inline-block" style={{ color: theme.primary }}>
+            Open venue in Google Maps
+          </a>
+          <p className="mt-3 text-sm">{countdown}</p>
+          <div className="mt-4">
+            <button className="action-btn" type="button" onClick={() => setIsMuted((v) => !v)}>
               {isMuted ? 'Unmute Music' : 'Mute Music'}
             </button>
-            <button type="button" className="action-btn" onClick={() => setPetalsEnabled((v) => !v)}>
-              {petalsEnabled ? 'Hide Petals' : 'Show Petals'}
-            </button>
           </div>
+        </section>
 
-          {config.animations.confetti && <div className="confetti" aria-hidden="true" />}
-        </motion.div>
-      </div>
+        <section className="rounded-2xl border p-5" style={{ borderColor: theme.secondary, backgroundColor: theme.cardBackground }}>
+          <h3 className="font-display text-2xl mb-3" style={{ color: theme.primary }}>Photo Gallery</h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {images.map((src) => (
+              <div key={src} className="image-frame">
+                <img src={src} alt="Wedding memory" className="w-full h-52 object-cover rounded-lg" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-2xl border p-5" style={{ borderColor: theme.secondary, backgroundColor: theme.cardBackground }}>
+          <h3 className="font-display text-2xl mb-3" style={{ color: theme.primary }}>Video Clips</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            {videos.map((src) => (
+              <video key={src} controls className="w-full rounded-xl border" style={{ borderColor: theme.secondary }}>
+                <source src={src} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

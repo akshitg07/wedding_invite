@@ -19,33 +19,21 @@ body {
   background-size: auto, auto, 180px;
 }
 
-.decor {
-  position: absolute;
-  top: 20px;
-  bottom: 20px;
-  width: 14px;
-  border-left: 2px solid;
-  border-right: 2px solid;
-  opacity: 0.55;
-  border-radius: 999px;
-}
-
-.decor-left {
-  left: 10px;
-}
-
-.decor-right {
-  right: 10px;
-}
-
 .action-btn {
   @apply rounded-full px-4 py-2 text-sm font-semibold transition;
   background: linear-gradient(135deg, #d4af37, #f3d98f);
   color: #3f2506;
 }
 
-.action-btn:hover {
-  transform: translateY(-1px);
+.field {
+  @apply text-sm font-medium flex flex-col gap-1;
+}
+
+.field input,
+.field select {
+  @apply rounded-lg border px-3 py-2 text-sm;
+  border-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 .image-frame {
@@ -54,35 +42,11 @@ body {
   background: linear-gradient(120deg, #d4af37, #fff0cc, #ba8632);
 }
 
-.thumb {
-  border: 2px solid transparent;
-  border-radius: 10px;
-}
-
-.thumb.active {
-  border-color: #d4af37;
-}
-
 .petal {
   position: absolute;
   top: 0;
   width: 10px;
   height: 14px;
-  background: linear-gradient(180deg, rgba(255, 211, 185, 0.9), rgba(223, 123, 114, 0.7));
+  background: linear-gradient(180deg, rgba(255, 211, 185, 0.8), rgba(223, 123, 114, 0.6));
   border-radius: 50% 50% 50% 0;
-}
-
-.confetti {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(212, 175, 55, 0.3) 1px, transparent 1.2px);
-  background-size: 24px 24px;
-  opacity: 0.25;
-  pointer-events: none;
-}
-
-@media (max-width: 768px) {
-  .decor {
-    display: none;
-  }
 }
