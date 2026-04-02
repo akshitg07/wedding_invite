@@ -1,40 +1,26 @@
 # Indian Traditional Wedding Invitation (React + Tailwind + Framer Motion)
 
-A modern, scrollable Indian wedding invitation website with royal card aesthetics, mandala-inspired decor, music controls, editable content, gallery, and video clips.
+A modern, scrollable Indian wedding invitation website with royal aesthetics, mandala-inspired decor, media sections, and a separate control plane page.
+
+## Pages
+
+- `/` → public invitation page
+- `/controlplane` → admin/control page for live content editing
 
 ## Features
 
-- Live control panel for editing bride/groom names, venue, date, theme colors, images, and video URLs
-- Indian traditional card-inspired layout with elegant spacing and readability
-- Fixed design presets: **Royal Red** and **Rose Gold**
-- Intro overlay (`Shubh Vivaah`) with invitation-opening interaction
-- Bride/Groom details, date/time, venue + Google Maps link, family message
-- Background music with visible mute/unmute control and autoplay fallback via intro tap
-- Scrollable website layout with separate invitation, details, gallery, and video sections
-- Subtle petal animation for visual polish
-- Countdown timer to wedding date
-- Mobile-first responsive layout
+- Separate **Control Plane** webpage at `/controlplane`
+- Edit bride/groom names, venue, date, and theme colors
+- Two theme presets only: **Royal Red** and **Rose Gold**
+- Add image URLs to gallery and video URLs to video clips section
+- Add unlimited custom sections from control plane (rendered on invitation page)
+- Smooth intro screen (`Shubh Vivaah`) and soft petal animation
+- Scrollable single-page invitation layout with low visual partitioning
+- Background music with mute/unmute control
 
-## Project Structure
+## Data Persistence
 
-```txt
-src/
-  App.jsx
-  styles.css
-  data/
-    config.json
-```
-
-## Configuration
-
-Edit `src/data/config.json` to customize initial values:
-
-- `theme`: default theme preset (`royalRed` or `roseGold`)
-- `themes`: base colors for the two supported theme presets
-- `invitation`: names, date/time, venue, maps URL, message
-- `images`: default gallery images
-- `videos`: default video clip URLs
-- `music.url`: instrumental track URL
+Changes from `/controlplane` are saved to browser `localStorage` and reflected on `/`.
 
 ## Run Locally
 
@@ -43,20 +29,17 @@ npm install
 npm run dev
 ```
 
-Then open the local URL shown by Vite (usually `http://localhost:5173`).
+Then open:
+- `http://localhost:5173/`
+- `http://localhost:5173/controlplane`
 
 ## Run with Docker
 
-Build the image:
-
 ```bash
 docker build -t wedding-invite .
-```
-
-Run the container:
-
-```bash
 docker run --rm -p 8080:80 wedding-invite
 ```
 
-Then open `http://localhost:8080`.
+Then open:
+- `http://localhost:8080/`
+- `http://localhost:8080/controlplane`

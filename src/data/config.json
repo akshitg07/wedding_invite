@@ -41,5 +41,11 @@
   ],
   "music": {
     "url": "https://cdn.pixabay.com/download/audio/2022/10/30/audio_c6f8ca11ee.mp3?filename=indian-background-126080.mp3"
-  }
+  },
+  "sections": [
+    {
+      "title": "Reception",
+      "body": "Dinner and blessings ceremony follows the wedding rituals."
+    }
+  ]
 }
