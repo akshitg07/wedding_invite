@@ -16,6 +16,7 @@ A scrollable Indian wedding invitation website with full-screen themed sections 
 - Set custom background music URL or upload music from browser in control plane
 - Add new sections dynamically
 - Upload photos/videos **from browser only** for each section
+- Remove already uploaded photos from control plane
 - Drag-and-place photos/videos anywhere in the section canvas
 - Add text blocks inside media canvas (beside/over images) and drag-place them
 - Resize placed media using width/height sliders

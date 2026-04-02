@@ -190,6 +190,16 @@ function App() {
     }));
   };
 
+  const removeMedia = (sectionId, mediaId) => {
+    setData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((section) => {
+        if (section.id !== sectionId) return section;
+        return { ...section, media: section.media.filter((item) => item.id !== mediaId) };
+      }),
+    }));
+  };
+
   const addSection = () => {
     if (!newSectionTitle.trim()) return;
     setData((prev) => ({
@@ -456,6 +466,15 @@ function App() {
                           </>
                         )}
                       </div>
+                      {item.type === 'photo' && (
+                        <button
+                          type="button"
+                          className="mt-2 rounded-md bg-red-700 px-3 py-1 text-xs font-semibold text-white"
+                          onClick={() => removeMedia(section.id, item.id)}
+                        >
+                          Remove Photo
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
