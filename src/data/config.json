@@ -41,6 +41,7 @@
       "titleColor": "#ffffff",
       "bodyColor": "#ffe9d1",
       "animationUrl": "",
+      "animationDim": 45,
       "transition": "fadeUp",
       "media": []
     },
@@ -52,6 +53,7 @@
       "titleColor": "#ffffff",
       "bodyColor": "#fff7de",
       "animationUrl": "",
+      "animationDim": 45,
       "transition": "slideLeft",
       "media": []
     }

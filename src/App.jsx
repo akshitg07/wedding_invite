@@ -46,6 +46,7 @@ const normalizeSections = (sections) =>
         titleColor: section.titleColor || '#ffffff',
         bodyColor: section.bodyColor || '#fff5e9',
         animationUrl: section.animationUrl || '',
+        animationDim: section.animationDim ?? 45,
         transition: section.transition || 'fadeUp',
       };
     }
@@ -76,6 +77,7 @@ const normalizeSections = (sections) =>
       titleColor: section.titleColor || '#ffffff',
       bodyColor: section.bodyColor || '#fff5e9',
       animationUrl: section.animationUrl || '',
+      animationDim: section.animationDim ?? 45,
       transition: section.transition || 'fadeUp',
       media: [...photos, ...videos],
     };
@@ -130,6 +132,7 @@ function App() {
   const [dragMedia, setDragMedia] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [notice, setNotice] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
   const audioRef = useRef(null);
 
   const theme = useMemo(
@@ -138,16 +141,20 @@ function App() {
   );
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      setNotice('Saved media is too large for browser storage. Current session will continue without crashing.');
-    }
+    const saved = localStorage.getItem(STORAGE_KEY) || '';
+    const current = JSON.stringify(data);
+    setIsDirty(saved !== current);
   }, [data]);
 
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.muted = isMuted;
+    if (!isMuted) {
+      const playPromise = audioRef.current.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.catch(() => setNotice('Autoplay blocked. Click "Play Music" to start audio.'));
+      }
+    }
   }, [isMuted]);
 
   useEffect(() => {
@@ -214,6 +221,7 @@ function App() {
           titleColor: '#ffffff',
           bodyColor: '#fff5e9',
           animationUrl: '',
+          animationDim: 45,
           transition: 'fadeUp',
           media: [],
         },
@@ -317,6 +325,24 @@ function App() {
     reader.readAsDataURL(file);
   };
 
+  const ensurePlay = () => {
+    if (!audioRef.current) return;
+    const playPromise = audioRef.current.play();
+    if (playPromise && typeof playPromise.then === 'function') {
+      playPromise.catch(() => setNotice('Autoplay blocked. Click "Play Music" to start audio.'));
+    }
+  };
+
+  const saveData = () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setNotice('Saved successfully. Your changes persist in this browser even after restart.');
+      setIsDirty(false);
+    } catch {
+      setNotice('Save failed: browser storage limit reached. Remove some large media and try again.');
+    }
+  };
+
   const dropOnCanvas = (e, sectionId) => {
     e.preventDefault();
     if (!dragMedia || dragMedia.sectionId !== sectionId) return;
@@ -338,7 +364,12 @@ function App() {
             <div className="panel">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <h2 className="font-display text-2xl" style={{ color: theme.primary }}>Control Plane</h2>
-                <a href="/" className="underline" style={{ color: theme.primary }}>Go to Invitation</a>
+                <div className="flex items-center gap-2">
+                  <button type="button" className="action-btn" onClick={saveData}>
+                    {isDirty ? 'Save Changes' : 'Saved'}
+                  </button>
+                  <a href="/" className="underline" style={{ color: theme.primary }}>Go to Invitation</a>
+                </div>
               </div>
               <p className="text-sm mt-2">Set section colors, upload media from browser, drag and place items in canvas, and resize with sliders.</p>
               {notice && <p className="mt-2 text-sm text-red-700">{notice}</p>}
@@ -391,6 +422,9 @@ function App() {
                     </select>
                   </label>
                   <label className="field">Internet Animation URL<input value={section.animationUrl || ''} onChange={(e) => updateSection(section.id, 'animationUrl', e.target.value)} placeholder="https://...gif / mp4 / embed url" /></label>
+                  <label className="field">Background Dimness ({section.animationDim ?? 45}%)
+                    <input type="range" min="0" max="90" value={section.animationDim ?? 45} onChange={(e) => updateSection(section.id, 'animationDim', Number(e.target.value))} />
+                  </label>
                 </div>
                 <label className="field">Body<textarea rows={3} value={section.body} onChange={(e) => updateSection(section.id, 'body', e.target.value)} /></label>
 
@@ -493,6 +527,7 @@ function App() {
                 onClick={() => {
                   setShowIntro(false);
                   setIsMuted(false);
+                  ensurePlay();
                 }}
               >
                 <motion.div
@@ -519,6 +554,19 @@ function App() {
               transition={{ duration: 0.75, ease: 'easeOut' }}
             >
               <div className="max-w-5xl mx-auto text-center text-white space-y-5 relative">
+                {section.animationUrl && (
+                  <div className="absolute inset-0 rounded-2xl overflow-hidden z-0 pointer-events-none">
+                    {section.animationUrl.match(/\.(gif|webp|png|jpg|jpeg)$/i) ? (
+                      <img src={section.animationUrl} alt="" className="w-full h-full object-cover" />
+                    ) : section.animationUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+                      <video src={section.animationUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                    ) : (
+                      <iframe title={`animation-bg-${section.id}`} src={section.animationUrl} className="w-full h-full border-0" loading="lazy" />
+                    )}
+                    <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
+                  </div>
+                )}
+                <div className="relative z-10 space-y-5">
                 {idx === 0 && (
                   <>
                     <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.familiesLine}</p>
@@ -526,22 +574,14 @@ function App() {
                     <p className="text-xl">{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
                     <p>{data.invitation.time} • {data.invitation.venue}</p>
                     <p className="text-sm">{countdown}</p>
-                    <button type="button" className="action-btn" onClick={() => setIsMuted((v) => !v)}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button type="button" className="action-btn" onClick={() => setIsMuted((v) => !v)}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
+                      <button type="button" className="action-btn" onClick={ensurePlay}>Play Music</button>
+                    </div>
                   </>
                 )}
                 <h3 className="font-display text-4xl md:text-5xl" style={{ color: section.titleColor || '#ffffff' }}>{section.title}</h3>
                 <p className="max-w-3xl mx-auto text-lg" style={{ color: section.bodyColor || '#fff5e9' }}>{section.body}</p>
-                {section.animationUrl && (
-                  <div className="mx-auto w-full max-w-3xl rounded-xl overflow-hidden bg-black/20 min-h-24">
-                    {section.animationUrl.match(/\.(gif|webp|png|jpg|jpeg)$/i) ? (
-                      <img src={section.animationUrl} alt="Section animation" className="w-full max-h-72 object-cover" />
-                    ) : section.animationUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-                      <video src={section.animationUrl} autoPlay loop muted playsInline className="w-full max-h-72 object-cover" />
-                    ) : (
-                      <iframe title={`animation-${section.id}`} src={section.animationUrl} className="w-full h-72 border-0" loading="lazy" />
-                    )}
-                  </div>
-                )}
 
                 <div className="stage-output">
                   {section.media.map((item) => (
@@ -569,6 +609,7 @@ function App() {
                       )}
                     </div>
                   ))}
+                </div>
                 </div>
               </div>
             </motion.section>

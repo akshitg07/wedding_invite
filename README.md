@@ -11,9 +11,12 @@ A scrollable Indian wedding invitation website with full-screen themed sections 
 
 - Edit all section titles, descriptions, and **section colors**
 - Change title/body font color for each section independently
-- Add internet animation URL per section (GIF, video URL, or embeddable URL)
+- Add internet animation URL per section as section background (GIF, video URL, or embeddable URL)
+- Control background animation dimness/brightness with section dimness slider
 - Select section transition animation (Fade Up, Slide Left, Zoom In, Rotate In)
 - Set custom background music URL or upload music from browser in control plane
+- Use invitation page Play Music control if browser blocks autoplay
+- Use **Save Changes** button at top of control plane to persist data
 - Add new sections dynamically
 - Upload photos/videos **from browser only** for each section
 - Remove already uploaded photos from control plane
@@ -37,7 +40,7 @@ Files outside these constraints are skipped during upload.
 
 ## Persistence
 
-All control panel changes are saved in browser `localStorage` and used by `/`.
+Saved control-plane data is stored in browser `localStorage` and persists across page refreshes, Docker restarts, and machine reboots (same browser profile/device).
 
 ## Run
 
@@ -54,7 +57,7 @@ Open:
 
 ```bash
 docker build -t wedding-invite .
-docker run --rm -p 9080:80 wedding-invite
+docker run --rm -p 8080:80 wedding-invite
 ```
 
 Open:
