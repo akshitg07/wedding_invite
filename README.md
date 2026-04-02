@@ -52,3 +52,20 @@ Then open the local URL shown by Vite (usually `http://localhost:5173`).
 npm run build
 npm run preview
 ```
+
+## Run with Docker
+
+Build the image:
+
+```bash
+docker build -t wedding-invite .
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 8080:80 wedding-invite
+```
+
+Then open `http://localhost:8080`.
+
