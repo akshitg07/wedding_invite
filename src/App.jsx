@@ -106,6 +106,7 @@ const getInitialData = () => {
     themeColors: config.themes[config.theme],
     invitation: config.invitation,
     sections: normalizeSections(config.sections),
+    musicUrl: config.music?.url || '',
   };
 
   try {
@@ -290,6 +291,22 @@ function App() {
     }));
   };
 
+  const uploadMusic = (files) => {
+    const file = Array.from(files || [])[0];
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+      setNotice('Please upload a valid audio file for music.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setData((prev) => ({ ...prev, musicUrl: reader.result }));
+      setNotice('');
+      setIsMuted(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const dropOnCanvas = (e, sectionId) => {
     e.preventDefault();
     if (!dragMedia || dragMedia.sectionId !== sectionId) return;
@@ -303,7 +320,7 @@ function App() {
 
   return (
     <div style={{ color: theme.text }}>
-      <audio ref={audioRef} src={config.music.url} loop autoPlay playsInline />
+      <audio ref={audioRef} src={data.musicUrl || config.music.url} loop autoPlay playsInline />
 
       {isControlPlane ? (
         <main className="control-bg min-h-screen px-4 py-8">
@@ -324,6 +341,20 @@ function App() {
               <label className="field">Date<input type="date" value={data.invitation.date} onChange={(e) => updateInvitation('date', e.target.value)} /></label>
               <label className="field">Theme<select value={data.themeKey} onChange={(e) => setData((prev) => ({ ...prev, themeKey: e.target.value, themeColors: config.themes[e.target.value] }))}><option value="royalRed">Royal Red</option><option value="roseGold">Rose Gold</option></select></label>
               <label className="field">Primary Color<input type="color" value={data.themeColors.primary} onChange={(e) => setData((prev) => ({ ...prev, themeColors: { ...prev.themeColors, primary: e.target.value } }))} /></label>
+            </div>
+
+            <div className="panel grid md:grid-cols-2 gap-4">
+              <label className="field">Music URL
+                <input
+                  value={data.musicUrl || ''}
+                  onChange={(e) => setData((prev) => ({ ...prev, musicUrl: e.target.value }))}
+                  placeholder="https://...mp3"
+                />
+              </label>
+              <div className="field">
+                <span>Upload Music (browser file)</span>
+                <input type="file" accept="audio/*" onChange={(e) => uploadMusic(e.target.files)} />
+              </div>
             </div>
 
             <div className="panel space-y-4">
