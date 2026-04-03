@@ -49,7 +49,13 @@ const normalizeSections = (sections) =>
         bodyColor: section.bodyColor || '#fff5e9',
         animationUrl: section.animationUrl || '',
         animationDim: section.animationDim ?? 45,
+        backgroundImageUrl: section.backgroundImageUrl || '',
         transition: section.transition || 'fadeUp',
+        media: (section.media || []).map((item) => ({
+          ...item,
+          shadow: item.shadow ?? false,
+          fontFamily: item.fontFamily || 'Playfair Display',
+        })),
       };
     }
 
@@ -80,8 +86,13 @@ const normalizeSections = (sections) =>
       bodyColor: section.bodyColor || '#fff5e9',
       animationUrl: section.animationUrl || '',
       animationDim: section.animationDim ?? 45,
+      backgroundImageUrl: section.backgroundImageUrl || '',
       transition: section.transition || 'fadeUp',
-      media: [...photos, ...videos],
+      media: [...photos, ...videos].map((item) => ({
+        ...item,
+        shadow: false,
+        fontFamily: 'Playfair Display',
+      })),
     };
   });
 
@@ -256,6 +267,7 @@ function App() {
           bodyColor: '#fff5e9',
           animationUrl: '',
           animationDim: 45,
+          backgroundImageUrl: '',
           transition: 'fadeUp',
           media: [],
         },
@@ -281,6 +293,8 @@ function App() {
               type: 'text',
               text,
               color: '#ffffff',
+              shadow: false,
+              fontFamily: 'Playfair Display',
               fontSize: 28,
               x: 24,
               y: 36,
@@ -333,6 +347,8 @@ function App() {
           id: `${sectionId}-${type}-${Date.now()}-${idx}`,
           type,
           src,
+          shadow: false,
+          fontFamily: 'Playfair Display',
           x: 8 + (idx % 3) * 26,
           y: type === 'photo' ? 28 : 58,
           w: type === 'photo' ? 24 : 38,
@@ -357,6 +373,17 @@ function App() {
       setIsMuted(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  const uploadSectionBackground = async (sectionId, files) => {
+    const file = Array.from(files || [])[0];
+    if (!file) return;
+    if (!IMAGE_TYPES.includes(file.type)) {
+      setNotice('Background image must be JPG/PNG/WEBP.');
+      return;
+    }
+    const src = await compressImageFile(file);
+    updateSection(sectionId, 'backgroundImageUrl', src);
   };
 
   const ensurePlay = () => {
@@ -516,6 +543,13 @@ function App() {
                   <label className="field">Background Dimness ({section.animationDim ?? 45}%)
                     <input type="range" min="0" max="90" value={section.animationDim ?? 45} onChange={(e) => updateSection(section.id, 'animationDim', Number(e.target.value))} />
                   </label>
+                  <label className="field">Section Background Image URL
+                    <input value={section.backgroundImageUrl || ''} onChange={(e) => updateSection(section.id, 'backgroundImageUrl', e.target.value)} placeholder="https://...jpg / png / webp" />
+                  </label>
+                  <div className="field">
+                    <span>Upload Section Background</span>
+                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => uploadSectionBackground(section.id, e.target.files)} />
+                  </div>
                 </div>
                 <label className="field">Body<textarea rows={3} value={section.body} onChange={(e) => updateSection(section.id, 'body', e.target.value)} /></label>
 
@@ -559,13 +593,13 @@ function App() {
                       }}
                     >
                       {item.type === 'photo' ? (
-                        <img src={item.src} alt="Uploaded" className="w-full h-full object-contain rounded-md bg-black/10" />
+                        <img src={item.src} alt="Uploaded" className={`w-full h-full object-contain rounded-md ${item.shadow ? 'shadow-lg' : ''}`} />
                       ) : item.type === 'video' ? (
-                        <video controls className="w-full h-full rounded-md"><source src={item.src} type="video/mp4" /></video>
+                        <video controls className={`w-full h-full rounded-md ${item.shadow ? 'shadow-lg' : ''}`}><source src={item.src} type="video/mp4" /></video>
                       ) : (
                         <div
                           className="w-full h-full flex items-center justify-center text-center px-2 rounded-md"
-                          style={{ color: item.color || '#ffffff', fontSize: `${item.fontSize || 24}px`, background: 'rgba(0,0,0,0.25)' }}
+                          style={{ color: item.color || '#ffffff', fontSize: `${item.fontSize || 24}px`, fontFamily: item.fontFamily || 'Playfair Display' }}
                         >
                           {item.text}
                         </div>
@@ -583,11 +617,22 @@ function App() {
                         <label className="field">Y %<input type="range" min="0" max="90" value={item.y} onChange={(e) => updateMedia(section.id, item.id, 'y', Number(e.target.value))} /></label>
                         <label className="field">Width %<input type="range" min="10" max="80" value={item.w} onChange={(e) => updateMedia(section.id, item.id, 'w', Number(e.target.value))} /></label>
                         <label className="field">Height %<input type="range" min="10" max="70" value={item.h} onChange={(e) => updateMedia(section.id, item.id, 'h', Number(e.target.value))} /></label>
+                        <label className="field">Shadow
+                          <input type="checkbox" checked={Boolean(item.shadow)} onChange={(e) => updateMedia(section.id, item.id, 'shadow', e.target.checked)} />
+                        </label>
                         {item.type === 'text' && (
                           <>
                             <label className="field">Text<input value={item.text} onChange={(e) => updateMedia(section.id, item.id, 'text', e.target.value)} /></label>
                             <label className="field">Text Color<input type="color" value={item.color || '#ffffff'} onChange={(e) => updateMedia(section.id, item.id, 'color', e.target.value)} /></label>
                             <label className="field">Font Size<input type="range" min="14" max="72" value={item.fontSize || 24} onChange={(e) => updateMedia(section.id, item.id, 'fontSize', Number(e.target.value))} /></label>
+                            <label className="field">Font
+                              <select value={item.fontFamily || 'Playfair Display'} onChange={(e) => updateMedia(section.id, item.id, 'fontFamily', e.target.value)}>
+                                <option value="Playfair Display">Playfair Display</option>
+                                <option value="Great Vibes">Great Vibes</option>
+                                <option value="serif">Serif</option>
+                                <option value="sans-serif">Sans Serif</option>
+                              </select>
+                            </label>
                           </>
                         )}
                       </div>
@@ -646,7 +691,13 @@ function App() {
               transition={{ duration: 0.75, ease: 'easeOut' }}
             >
               <div className="max-w-5xl mx-auto text-center text-white space-y-5 relative">
-                {section.animationUrl && (
+                {section.backgroundImageUrl && (
+                  <div className="absolute inset-0 rounded-2xl overflow-hidden z-0 pointer-events-none">
+                    <img src={section.backgroundImageUrl} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
+                  </div>
+                )}
+                {!section.backgroundImageUrl && section.animationUrl && (
                   <div className="absolute inset-0 rounded-2xl overflow-hidden z-0 pointer-events-none">
                     {section.animationUrl.match(/\.(gif|webp|png|jpg|jpeg)$/i) ? (
                       <img src={section.animationUrl} alt="" className="w-full h-full object-cover" />
@@ -688,13 +739,13 @@ function App() {
                       }}
                     >
                       {item.type === 'photo' ? (
-                        <img src={item.src} alt="Wedding" className="w-full h-full object-contain rounded-xl shadow-lg bg-black/10" />
+                        <img src={item.src} alt="Wedding" className={`w-full h-full object-contain rounded-xl ${item.shadow ? 'shadow-lg' : ''}`} />
                       ) : item.type === 'video' ? (
-                        <video controls className="w-full h-full rounded-xl shadow-lg"><source src={item.src} type="video/mp4" /></video>
+                        <video controls className={`w-full h-full rounded-xl ${item.shadow ? 'shadow-lg' : ''}`}><source src={item.src} type="video/mp4" /></video>
                       ) : (
                         <div
-                          className="w-full h-full flex items-center justify-center text-center px-3 rounded-xl shadow-lg"
-                          style={{ color: item.color || '#ffffff', fontSize: `${item.fontSize || 24}px`, background: 'rgba(0,0,0,0.22)' }}
+                          className={`w-full h-full flex items-center justify-center text-center px-3 rounded-xl ${item.shadow ? 'shadow-lg' : ''}`}
+                          style={{ color: item.color || '#ffffff', fontSize: `${item.fontSize || 24}px`, fontFamily: item.fontFamily || 'Playfair Display' }}
                         >
                           {item.text}
                         </div>

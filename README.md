@@ -14,6 +14,7 @@ Control plane password: `disha&akshit@2106`
 - Edit all section titles, descriptions, and **section colors**
 - Change title/body font color for each section independently
 - Add internet animation URL per section as section background (GIF, video URL, or embeddable URL)
+- Add custom section background image via URL or browser upload (scales to full section)
 - Control background animation dimness/brightness with section dimness slider
 - Select section transition animation (Fade Up, Slide Left, Zoom In, Rotate In)
 - Set custom background music URL or upload music from browser in control plane
@@ -24,6 +25,7 @@ Control plane password: `disha&akshit@2106`
 - Remove already uploaded photos from control plane
 - Drag-and-place photos/videos anywhere in the section canvas
 - Add text blocks inside media canvas (beside/over images) and drag-place them
+- Choose fonts for text blocks and optional shadow for photos/videos/text
 - Resize placed media using width/height sliders
 - Edit media placement precisely with X/Y sliders
 
