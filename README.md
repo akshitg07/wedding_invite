@@ -22,6 +22,7 @@ Control plane password: `disha&akshit@2106`
 - Music source changes auto-reload; if browser blocks autoplay click **Play Music**
 - Music upload shows progress bar, current selected track name, and remove option in control plane
 - Use **Save Changes** button at top of control plane to persist data
+- Save and load up to **5 presets** (latest 5 retained) for quick rollback
 - Add new sections dynamically
 - Upload photos/videos **from browser only** for each section
 - Remove already uploaded photos from control plane

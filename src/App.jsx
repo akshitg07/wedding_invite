@@ -123,6 +123,7 @@ const getInitialData = () => {
     sections: normalizeSections(config.sections),
     musicUrl: config.music?.url || '',
     musicName: config.music?.name || 'Default Music',
+    presets: [],
   };
 
   try {
@@ -153,6 +154,7 @@ function App() {
     () => sessionStorage.getItem(CONTROL_UNLOCK_KEY) === 'true'
   );
   const [musicUploadProgress, setMusicUploadProgress] = useState(0);
+  const [presetName, setPresetName] = useState('');
   const audioRef = useRef(null);
 
   const theme = useMemo(
@@ -441,6 +443,41 @@ function App() {
     persist();
   };
 
+  const buildPresetPayload = () => ({
+    themeKey: data.themeKey,
+    themeColors: data.themeColors,
+    invitation: data.invitation,
+    sections: data.sections,
+    musicUrl: data.musicUrl,
+    musicName: data.musicName,
+  });
+
+  const savePreset = () => {
+    const payload = buildPresetPayload();
+    const name = presetName.trim() || `Preset ${data.presets.length + 1}`;
+    setData((prev) => {
+      const nextPresets = [
+        ...prev.presets,
+        { id: `preset-${Date.now()}`, name, createdAt: new Date().toISOString(), payload },
+      ].slice(-5);
+      return { ...prev, presets: nextPresets };
+    });
+    setPresetName('');
+    setNotice('Preset saved. Click Save Changes to persist presets to server.');
+  };
+
+  const loadPreset = (presetId) => {
+    const found = data.presets.find((p) => p.id === presetId);
+    if (!found) return;
+    setData((prev) => ({
+      ...prev,
+      ...found.payload,
+      sections: normalizeSections(found.payload.sections || []),
+      presets: prev.presets,
+    }));
+    setNotice(`Loaded preset: ${found.name}`);
+  };
+
   const dropOnCanvas = (e, sectionId) => {
     e.preventDefault();
     if (!dragMedia || dragMedia.sectionId !== sectionId) return;
@@ -529,6 +566,31 @@ function App() {
               <label className="field">Date<input type="date" value={data.invitation.date} onChange={(e) => updateInvitation('date', e.target.value)} /></label>
               <label className="field">Theme<select value={data.themeKey} onChange={(e) => setData((prev) => ({ ...prev, themeKey: e.target.value, themeColors: config.themes[e.target.value] }))}><option value="royalRed">Royal Red</option><option value="roseGold">Rose Gold</option></select></label>
               <label className="field">Primary Color<input type="color" value={data.themeColors.primary} onChange={(e) => setData((prev) => ({ ...prev, themeColors: { ...prev.themeColors, primary: e.target.value } }))} /></label>
+            </div>
+
+            <div className="panel space-y-3">
+              <h3 className="font-display text-xl" style={{ color: theme.primary }}>Presets (max 5)</h3>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  className="flex-1 min-w-56 rounded-lg border px-3 py-2 text-sm"
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  placeholder="Preset name"
+                />
+                <button type="button" className="action-btn" onClick={savePreset}>Save as Preset</button>
+              </div>
+              <div className="space-y-2">
+                {data.presets.length === 0 && <p className="text-sm opacity-70">No presets saved yet.</p>}
+                {data.presets.map((preset) => (
+                  <div key={preset.id} className="flex items-center justify-between gap-2 rounded-md bg-white/80 px-3 py-2">
+                    <div className="text-sm">
+                      <p className="font-semibold">{preset.name}</p>
+                      <p className="opacity-70">{new Date(preset.createdAt).toLocaleString()}</p>
+                    </div>
+                    <button type="button" className="action-btn" onClick={() => loadPreset(preset.id)}>Load</button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="panel grid md:grid-cols-2 gap-4">
