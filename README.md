@@ -20,6 +20,7 @@ Control plane password: `disha&akshit@2106`
 - Set custom background music URL or upload music from browser in control plane
 - Use invitation page Play Music control if browser blocks autoplay
 - Music source changes auto-reload; if browser blocks autoplay click **Play Music**
+- Music upload shows progress bar, current selected track name, and remove option in control plane
 - Use **Save Changes** button at top of control plane to persist data
 - Add new sections dynamically
 - Upload photos/videos **from browser only** for each section

@@ -61,6 +61,7 @@
     }
   ],
   "music": {
-    "url": "https://cdn.pixabay.com/download/audio/2022/10/30/audio_c6f8ca11ee.mp3?filename=indian-background-126080.mp3"
+    "url": "https://cdn.pixabay.com/download/audio/2022/10/30/audio_c6f8ca11ee.mp3?filename=indian-background-126080.mp3",
+    "name": "Default Indian Instrumental"
   }
 }

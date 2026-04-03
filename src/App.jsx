@@ -122,6 +122,7 @@ const getInitialData = () => {
     invitation: config.invitation,
     sections: normalizeSections(config.sections),
     musicUrl: config.music?.url || '',
+    musicName: config.music?.name || 'Default Music',
   };
 
   try {
@@ -151,6 +152,7 @@ function App() {
   const [controlUnlocked, setControlUnlocked] = useState(
     () => sessionStorage.getItem(CONTROL_UNLOCK_KEY) === 'true'
   );
+  const [musicUploadProgress, setMusicUploadProgress] = useState(0);
   const audioRef = useRef(null);
 
   const theme = useMemo(
@@ -378,10 +380,15 @@ function App() {
       return;
     }
     const reader = new FileReader();
+    setMusicUploadProgress(0);
+    reader.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      setMusicUploadProgress(Math.round((e.loaded / e.total) * 100));
+    };
     reader.onload = () => {
-      setData((prev) => ({ ...prev, musicUrl: reader.result }));
+      setData((prev) => ({ ...prev, musicUrl: reader.result, musicName: file.name }));
       setNotice('');
-      setIsMuted(false);
+      setMusicUploadProgress(100);
     };
     reader.readAsDataURL(file);
   };
@@ -528,13 +535,31 @@ function App() {
               <label className="field">Music URL
                 <input
                   value={data.musicUrl || ''}
-                  onChange={(e) => setData((prev) => ({ ...prev, musicUrl: e.target.value }))}
+                  onChange={(e) => setData((prev) => ({ ...prev, musicUrl: e.target.value, musicName: 'Custom URL Music' }))}
                   placeholder="https://...mp3"
                 />
               </label>
               <div className="field">
                 <span>Upload Music (browser file)</span>
                 <input type="file" accept="audio/*" onChange={(e) => uploadMusic(e.target.files)} />
+              </div>
+              <div className="field">
+                <span>Current Music</span>
+                <p className="rounded-md bg-white/80 px-3 py-2 text-sm">{data.musicName || 'No music selected'}</p>
+              </div>
+              <div className="field">
+                <span>Upload Progress</span>
+                <div className="h-3 w-full rounded bg-black/10 overflow-hidden">
+                  <div className="h-full bg-emerald-600 transition-all" style={{ width: `${musicUploadProgress}%` }} />
+                </div>
+                <p className="text-xs">{musicUploadProgress}%</p>
+                <button
+                  type="button"
+                  className="mt-2 rounded-md bg-red-700 px-3 py-1 text-xs font-semibold text-white"
+                  onClick={() => setData((prev) => ({ ...prev, musicUrl: '', musicName: '' }))}
+                >
+                  Remove Music
+                </button>
               </div>
             </div>
 
