@@ -203,6 +203,17 @@ function App() {
   }, [isMuted]);
 
   useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.load();
+    if (!isMuted) {
+      const playPromise = audioRef.current.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.catch(() => setNotice('Music source updated but playback was blocked. Click "Play Music".'));
+      }
+    }
+  }, [data.musicUrl]);
+
+  useEffect(() => {
     const weddingDate = new Date(`${data.invitation.date}T18:30:00`);
     const timer = setInterval(() => {
       const diff = weddingDate.getTime() - Date.now();
@@ -386,11 +397,14 @@ function App() {
     updateSection(sectionId, 'backgroundImageUrl', src);
   };
 
-  const ensurePlay = () => {
+  const startMusic = () => {
+    setIsMuted(false);
     if (!audioRef.current) return;
+    audioRef.current.muted = false;
+    audioRef.current.volume = 1;
     const playPromise = audioRef.current.play();
     if (playPromise && typeof playPromise.then === 'function') {
-      playPromise.catch(() => setNotice('Autoplay blocked. Click "Play Music" to start audio.'));
+      playPromise.catch(() => setNotice('Unable to autoplay. Please click Play Music again.'));
     }
   };
 
@@ -433,7 +447,15 @@ function App() {
 
   return (
     <div style={{ color: theme.text }}>
-      <audio ref={audioRef} src={data.musicUrl || config.music.url} loop autoPlay playsInline />
+      <audio
+        ref={audioRef}
+        src={data.musicUrl || config.music.url}
+        loop
+        autoPlay
+        playsInline
+        preload="auto"
+        onError={() => setNotice('Music failed to load. Check the music URL or uploaded file.')}
+      />
 
       {isControlPlane ? (
         !controlUnlocked ? (
@@ -663,8 +685,7 @@ function App() {
                 exit={{ opacity: 0 }}
                 onClick={() => {
                   setShowIntro(false);
-                  setIsMuted(false);
-                  ensurePlay();
+                  startMusic();
                 }}
               >
                 <motion.div
@@ -718,8 +739,8 @@ function App() {
                     <p>{data.invitation.time} • {data.invitation.venue}</p>
                     <p className="text-sm">{countdown}</p>
                     <div className="flex items-center justify-center gap-2">
-                      <button type="button" className="action-btn" onClick={() => setIsMuted((v) => !v)}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
-                      <button type="button" className="action-btn" onClick={ensurePlay}>Play Music</button>
+                      <button type="button" className="action-btn" onClick={() => (isMuted ? startMusic() : setIsMuted(true))}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
+                      <button type="button" className="action-btn" onClick={startMusic}>Play Music</button>
                     </div>
                   </>
                 )}

@@ -19,6 +19,7 @@ Control plane password: `disha&akshit@2106`
 - Select section transition animation (Fade Up, Slide Left, Zoom In, Rotate In)
 - Set custom background music URL or upload music from browser in control plane
 - Use invitation page Play Music control if browser blocks autoplay
+- Music source changes auto-reload; if browser blocks autoplay click **Play Music**
 - Use **Save Changes** button at top of control plane to persist data
 - Add new sections dynamically
 - Upload photos/videos **from browser only** for each section
