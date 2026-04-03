@@ -181,7 +181,11 @@ function App() {
           };
           setData(merged);
           setSavedSnapshot(JSON.stringify(merged));
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          } catch {
+            // Server state is primary; local cache may exceed quota for large media.
+          }
           return;
         }
       } catch {
@@ -427,9 +431,13 @@ function App() {
           body: snapshot,
         });
         if (!res.ok) throw new Error('Failed to persist on server');
-        localStorage.setItem(STORAGE_KEY, snapshot);
         setSavedSnapshot(snapshot);
         setNotice('Saved to server. Everyone using this link sees latest pushed changes.');
+        try {
+          localStorage.setItem(STORAGE_KEY, snapshot);
+        } catch {
+          setNotice('Saved to server successfully. Local browser cache skipped due storage limit.');
+        }
       } catch {
         try {
           localStorage.setItem(STORAGE_KEY, snapshot);

@@ -48,6 +48,7 @@ Files outside these constraints are skipped during upload.
 ## Persistence
 
 Saved control-plane data is pushed to the server container (`/api/state`) and written to `/data/invitation-state.json`. This is shared for anyone opening the same link and persists across container/machine restarts when the Docker volume is mounted (`./data:/data`).
+If browser localStorage quota is exceeded (large media), server save still works and remains the source of truth.
 
 ## Run
 
