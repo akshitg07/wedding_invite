@@ -50,6 +50,7 @@ const normalizeSections = (sections) =>
         animationUrl: section.animationUrl || '',
         animationDim: section.animationDim ?? 45,
         backgroundImageUrl: section.backgroundImageUrl || '',
+        contentPosition: section.contentPosition || 'center',
         transition: section.transition || 'fadeUp',
         media: (section.media || []).map((item) => ({
           ...item,
@@ -87,6 +88,7 @@ const normalizeSections = (sections) =>
       animationUrl: section.animationUrl || '',
       animationDim: section.animationDim ?? 45,
       backgroundImageUrl: section.backgroundImageUrl || '',
+      contentPosition: section.contentPosition || 'center',
       transition: section.transition || 'fadeUp',
       media: [...photos, ...videos].map((item) => ({
         ...item,
@@ -287,6 +289,7 @@ function App() {
           animationUrl: '',
           animationDim: 45,
           backgroundImageUrl: '',
+          contentPosition: 'center',
           transition: 'fadeUp',
           media: [],
         },
@@ -648,6 +651,13 @@ function App() {
                   <label className="field">Section Color<input type="color" value={section.sectionColor} onChange={(e) => updateSection(section.id, 'sectionColor', e.target.value)} /></label>
                   <label className="field">Title Font Color<input type="color" value={section.titleColor || '#ffffff'} onChange={(e) => updateSection(section.id, 'titleColor', e.target.value)} /></label>
                   <label className="field">Body Font Color<input type="color" value={section.bodyColor || '#fff5e9'} onChange={(e) => updateSection(section.id, 'bodyColor', e.target.value)} /></label>
+                  <label className="field">Content Position
+                    <select value={section.contentPosition || 'center'} onChange={(e) => updateSection(section.id, 'contentPosition', e.target.value)}>
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </label>
                   <label className="field">Transition
                     <select value={section.transition || 'fadeUp'} onChange={(e) => updateSection(section.id, 'transition', e.target.value)}>
                       <option value="fadeUp">Fade Up</option>
@@ -799,7 +809,13 @@ function App() {
           {data.sections.map((section, idx) => (
             <motion.section
               key={section.id}
-              className="min-h-screen px-4 py-10 md:py-16 relative overflow-hidden"
+              className={`min-h-screen px-4 py-10 md:py-16 relative overflow-hidden flex ${
+                section.contentPosition === 'top'
+                  ? 'items-start'
+                  : section.contentPosition === 'bottom'
+                    ? 'items-end'
+                    : 'items-center'
+              }`}
               style={{ backgroundColor: section.sectionColor || tint(theme.primary, idx * 8) }}
               initial={transitionMap[section.transition || 'fadeUp'].initial}
               whileInView={transitionMap[section.transition || 'fadeUp'].whileInView}
@@ -808,23 +824,23 @@ function App() {
             >
               {section.backgroundImageUrl && (
                 <div className="absolute inset-0 z-0 pointer-events-none">
-                  <img src={section.backgroundImageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={section.backgroundImageUrl} alt="" className="w-full h-full object-cover xl:object-contain" />
                   <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
                 </div>
               )}
               {!section.backgroundImageUrl && section.animationUrl && (
                 <div className="absolute inset-0 z-0 pointer-events-none">
                   {section.animationUrl.match(/\.(gif|webp|png|jpg|jpeg)$/i) ? (
-                    <img src={section.animationUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={section.animationUrl} alt="" className="w-full h-full object-cover xl:object-contain" />
                   ) : section.animationUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-                    <video src={section.animationUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                    <video src={section.animationUrl} autoPlay loop muted playsInline className="w-full h-full object-cover xl:object-contain" />
                   ) : (
                     <iframe title={`animation-bg-${section.id}`} src={section.animationUrl} className="w-full h-full border-0" loading="lazy" />
                   )}
                   <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
                 </div>
               )}
-              <div className="max-w-5xl mx-auto text-center text-white space-y-5 relative">
+              <div className="max-w-5xl w-full mx-auto text-center text-white space-y-5 relative">
                 <div className="relative z-10 space-y-5">
                 {idx === 0 && (
                   <>

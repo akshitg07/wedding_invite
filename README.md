@@ -13,6 +13,7 @@ Control plane password: `disha&akshit@2106`
 
 - Edit all section titles, descriptions, and **section colors**
 - Change title/body font color for each section independently
+- Choose section content position: top / center / bottom
 - Add internet animation URL per section as section background (GIF, video URL, or embeddable URL)
 - Add custom section background image via URL or browser upload (scales to full section)
 - Control background animation dimness/brightness with section dimness slider

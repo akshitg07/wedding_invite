@@ -43,6 +43,7 @@
       "animationUrl": "",
       "animationDim": 45,
       "backgroundImageUrl": "",
+      "contentPosition": "center",
       "transition": "fadeUp",
       "media": []
     },
@@ -56,6 +57,7 @@
       "animationUrl": "",
       "animationDim": 45,
       "backgroundImageUrl": "",
+      "contentPosition": "center",
       "transition": "slideLeft",
       "media": []
     }
