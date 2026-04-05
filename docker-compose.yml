@@ -1,0 +1,9 @@
+services:
+  wedding-invite:
+    build: .
+    container_name: wedding-invite
+    ports:
+      - "9080:9080"
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
