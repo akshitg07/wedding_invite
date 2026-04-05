@@ -33,7 +33,13 @@ body {
 
 .stage-output {
   position: relative;
-  min-height: 460px;
+  min-height: 68vh;
+}
+
+@media (max-width: 768px) {
+  .stage-output {
+    min-height: 56vh;
+  }
 }
 
 .media-item {

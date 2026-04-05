@@ -799,32 +799,32 @@ function App() {
           {data.sections.map((section, idx) => (
             <motion.section
               key={section.id}
-              className="min-h-screen px-4 py-10 md:py-16"
+              className="min-h-screen px-4 py-10 md:py-16 relative overflow-hidden"
               style={{ backgroundColor: section.sectionColor || tint(theme.primary, idx * 8) }}
               initial={transitionMap[section.transition || 'fadeUp'].initial}
               whileInView={transitionMap[section.transition || 'fadeUp'].whileInView}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.75, ease: 'easeOut' }}
             >
+              {section.backgroundImageUrl && (
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                  <img src={section.backgroundImageUrl} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
+                </div>
+              )}
+              {!section.backgroundImageUrl && section.animationUrl && (
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                  {section.animationUrl.match(/\.(gif|webp|png|jpg|jpeg)$/i) ? (
+                    <img src={section.animationUrl} alt="" className="w-full h-full object-cover" />
+                  ) : section.animationUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+                    <video src={section.animationUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                  ) : (
+                    <iframe title={`animation-bg-${section.id}`} src={section.animationUrl} className="w-full h-full border-0" loading="lazy" />
+                  )}
+                  <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
+                </div>
+              )}
               <div className="max-w-5xl mx-auto text-center text-white space-y-5 relative">
-                {section.backgroundImageUrl && (
-                  <div className="absolute inset-0 rounded-2xl overflow-hidden z-0 pointer-events-none">
-                    <img src={section.backgroundImageUrl} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
-                  </div>
-                )}
-                {!section.backgroundImageUrl && section.animationUrl && (
-                  <div className="absolute inset-0 rounded-2xl overflow-hidden z-0 pointer-events-none">
-                    {section.animationUrl.match(/\.(gif|webp|png|jpg|jpeg)$/i) ? (
-                      <img src={section.animationUrl} alt="" className="w-full h-full object-cover" />
-                    ) : section.animationUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-                      <video src={section.animationUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-                    ) : (
-                      <iframe title={`animation-bg-${section.id}`} src={section.animationUrl} className="w-full h-full border-0" loading="lazy" />
-                    )}
-                    <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
-                  </div>
-                )}
                 <div className="relative z-10 space-y-5">
                 {idx === 0 && (
                   <>
@@ -850,8 +850,8 @@ function App() {
                       style={{
                         left: `${item.x}%`,
                         top: `${item.y}%`,
-                        width: `${item.w}%`,
-                        height: `${item.h}%`,
+                        width: `${Math.min((item.w || 20) * 1.55, 94)}%`,
+                        height: `${Math.min((item.h || 20) * 1.45, 92)}%`,
                       }}
                     >
                       {item.type === 'photo' ? (
