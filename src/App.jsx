@@ -56,6 +56,8 @@ const normalizeSections = (sections) =>
           ...item,
           shadow: item.shadow ?? false,
           fontFamily: item.fontFamily || 'Playfair Display',
+          transitionType: item.transitionType || 'fade',
+          transitionDuration: item.transitionDuration ?? 0.8,
         })),
       };
     }
@@ -94,9 +96,19 @@ const normalizeSections = (sections) =>
         ...item,
         shadow: false,
         fontFamily: 'Playfair Display',
+        transitionType: 'fade',
+        transitionDuration: 0.8,
       })),
     };
   });
+
+const mediaTransitionMap = {
+  none: { initial: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }, animate: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 } },
+  fade: { initial: { opacity: 0 }, animate: { opacity: 1 } },
+  slideUp: { initial: { opacity: 0, y: 40 }, animate: { opacity: 1, y: 0 } },
+  zoomIn: { initial: { opacity: 0, scale: 0.82 }, animate: { opacity: 1, scale: 1 } },
+  rotateIn: { initial: { opacity: 0, rotate: -8, scale: 0.9 }, animate: { opacity: 1, rotate: 0, scale: 1 } },
+};
 
 const transitionMap = {
   fadeUp: {
@@ -317,6 +329,8 @@ function App() {
               color: '#ffffff',
               shadow: false,
               fontFamily: 'Playfair Display',
+              transitionType: 'fade',
+              transitionDuration: 0.8,
               fontSize: 28,
               x: 24,
               y: 36,
@@ -371,6 +385,8 @@ function App() {
           src,
           shadow: false,
           fontFamily: 'Playfair Display',
+          transitionType: 'fade',
+          transitionDuration: 0.8,
           x: 8 + (idx % 3) * 26,
           y: type === 'photo' ? 28 : 58,
           w: type === 'photo' ? 24 : 38,
@@ -716,11 +732,14 @@ function App() {
 
                 <div className="canvas" onDragOver={(e) => e.preventDefault()} onDrop={(e) => dropOnCanvas(e, section.id)}>
                   {section.media.map((item) => (
-                    <div
+                    <motion.div
                       key={item.id}
                       className="absolute media-item"
                       draggable
                       onDragStart={() => setDragMedia({ sectionId: section.id, mediaId: item.id })}
+                      initial={(mediaTransitionMap[item.transitionType || 'fade'] || mediaTransitionMap.fade).initial}
+                      animate={(mediaTransitionMap[item.transitionType || 'fade'] || mediaTransitionMap.fade).animate}
+                      transition={{ duration: item.transitionDuration ?? 0.8, ease: 'easeOut' }}
                       style={{
                         left: `${item.x}%`,
                         top: `${item.y}%`,
@@ -740,7 +759,7 @@ function App() {
                           {item.text}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
@@ -755,6 +774,25 @@ function App() {
                         <label className="field">Height %<input type="range" min="10" max="70" value={item.h} onChange={(e) => updateMedia(section.id, item.id, 'h', Number(e.target.value))} /></label>
                         <label className="field">Shadow
                           <input type="checkbox" checked={Boolean(item.shadow)} onChange={(e) => updateMedia(section.id, item.id, 'shadow', e.target.checked)} />
+                        </label>
+                        <label className="field">Transition
+                          <select value={item.transitionType || 'fade'} onChange={(e) => updateMedia(section.id, item.id, 'transitionType', e.target.value)}>
+                            <option value="none">None</option>
+                            <option value="fade">Fade</option>
+                            <option value="slideUp">Slide Up</option>
+                            <option value="zoomIn">Zoom In</option>
+                            <option value="rotateIn">Rotate In</option>
+                          </select>
+                        </label>
+                        <label className="field">Transition Duration ({Number(item.transitionDuration ?? 0.8).toFixed(1)}s)
+                          <input
+                            type="range"
+                            min="0.2"
+                            max="2.5"
+                            step="0.1"
+                            value={item.transitionDuration ?? 0.8}
+                            onChange={(e) => updateMedia(section.id, item.id, 'transitionDuration', Number(e.target.value))}
+                          />
                         </label>
                         {item.type === 'text' && (
                           <>
@@ -878,9 +916,13 @@ function App() {
 
                 <div className="stage-output">
                   {section.media.map((item) => (
-                    <div
+                    <motion.div
                       key={item.id}
                       className="absolute"
+                      initial={(mediaTransitionMap[item.transitionType || 'fade'] || mediaTransitionMap.fade).initial}
+                      whileInView={(mediaTransitionMap[item.transitionType || 'fade'] || mediaTransitionMap.fade).animate}
+                      viewport={{ once: false, amount: 0.35 }}
+                      transition={{ duration: item.transitionDuration ?? 0.8, ease: 'easeOut' }}
                       style={{
                         left: `${item.x}%`,
                         top: `${item.y}%`,
@@ -900,7 +942,7 @@ function App() {
                           {item.text}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
                 </div>
