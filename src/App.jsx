@@ -129,11 +129,25 @@ const transitionMap = {
   },
 };
 
+const normalizeInvitation = (invitation = {}) => {
+  const fallbackPosition = invitation.heroPosition || 'center';
+  return {
+    ...config.invitation,
+    ...invitation,
+    titleLinePosition: invitation.titleLinePosition || fallbackPosition,
+    familiesLinePosition: invitation.familiesLinePosition || fallbackPosition,
+    namesPosition: invitation.namesPosition || fallbackPosition,
+    datePosition: invitation.datePosition || fallbackPosition,
+    venuePosition: invitation.venuePosition || fallbackPosition,
+    countdownPosition: invitation.countdownPosition || fallbackPosition,
+  };
+};
+
 const getInitialData = () => {
   const fallback = {
     themeKey: config.theme,
     themeColors: config.themes[config.theme],
-    invitation: config.invitation,
+    invitation: normalizeInvitation(config.invitation),
     sections: normalizeSections(config.sections),
     musicUrl: config.music?.url || '',
     musicName: config.music?.name || 'Default Music',
@@ -144,7 +158,12 @@ const getInitialData = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return fallback;
     const parsed = JSON.parse(saved);
-    return { ...fallback, ...parsed, sections: normalizeSections(parsed.sections || fallback.sections) };
+    return {
+      ...fallback,
+      ...parsed,
+      invitation: normalizeInvitation(parsed.invitation || fallback.invitation),
+      sections: normalizeSections(parsed.sections || fallback.sections),
+    };
   } catch {
     return fallback;
   }
@@ -593,16 +612,58 @@ function App() {
               <label className="field">Groom Name<input value={data.invitation.groom} onChange={(e) => updateInvitation('groom', e.target.value)} /></label>
               <label className="field">Venue<input value={data.invitation.venue} onChange={(e) => updateInvitation('venue', e.target.value)} /></label>
               <label className="field">Date<input type="date" value={data.invitation.date} onChange={(e) => updateInvitation('date', e.target.value)} /></label>
-              <label className="field">Main Title Position
-                <select value={data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('heroPosition', e.target.value)}>
-                  <option value="top">Top</option>
-                  <option value="center">Center</option>
-                  <option value="bottom">Bottom</option>
-                </select>
-              </label>
-              <label className="field">Theme<select value={data.themeKey} onChange={(e) => setData((prev) => ({ ...prev, themeKey: e.target.value, themeColors: config.themes[e.target.value] }))}><option value="royalRed">Royal Red</option><option value="roseGold">Rose Gold</option></select></label>
-              <label className="field">Primary Color<input type="color" value={data.themeColors.primary} onChange={(e) => setData((prev) => ({ ...prev, themeColors: { ...prev.themeColors, primary: e.target.value } }))} /></label>
-            </div>
+                  <label className="field">Main Title Position
+                    <select value={data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('heroPosition', e.target.value)}>
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </label>
+                  <label className="field">Title Line Position
+                    <select value={data.invitation.titleLinePosition || data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('titleLinePosition', e.target.value)}>
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </label>
+                  <label className="field">Families Line Position
+                    <select value={data.invitation.familiesLinePosition || data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('familiesLinePosition', e.target.value)}>
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </label>
+                  <label className="field">Names Position
+                    <select value={data.invitation.namesPosition || data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('namesPosition', e.target.value)}>
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </label>
+                  <label className="field">Date Position
+                    <select value={data.invitation.datePosition || data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('datePosition', e.target.value)}>
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </label>
+                  <label className="field">Venue/Time Position
+                    <select value={data.invitation.venuePosition || data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('venuePosition', e.target.value)}>
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </label>
+                  <label className="field">Countdown Position
+                    <select value={data.invitation.countdownPosition || data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('countdownPosition', e.target.value)}>
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </label>
+                  <label className="field">Theme<select value={data.themeKey} onChange={(e) => setData((prev) => ({ ...prev, themeKey: e.target.value, themeColors: config.themes[e.target.value] }))}><option value="royalRed">Royal Red</option><option value="roseGold">Rose Gold</option></select></label>
+                  <label className="field">Primary Color<input type="color" value={data.themeColors.primary} onChange={(e) => setData((prev) => ({ ...prev, themeColors: { ...prev.themeColors, primary: e.target.value } }))} /></label>
+                </div>
 
             <div className="panel space-y-3">
               <h3 className="font-display text-xl" style={{ color: theme.primary }}>Presets (max 5)</h3>
@@ -890,21 +951,40 @@ function App() {
               <div className="max-w-5xl w-full mx-auto text-center text-white space-y-5 relative">
                 <div className="relative z-10 space-y-5">
                 {idx === 0 && (
-                  <div
-                    className={`flex flex-col gap-3 min-h-[36vh] ${
-                      data.invitation.heroPosition === 'top'
-                        ? 'justify-start'
-                        : data.invitation.heroPosition === 'bottom'
-                          ? 'justify-end'
-                          : 'justify-center'
-                    }`}
-                  >
-                    <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.titleLine || 'Wedding Invitation'}</p>
-                    <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.familiesLine}</p>
-                    <h2 className="font-script text-6xl md:text-8xl">{data.invitation.bride} & {data.invitation.groom}</h2>
-                    <p className="text-xl">{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                    <p>{data.invitation.time} • {data.invitation.venue}</p>
-                    <p className="text-sm">{countdown}</p>
+                  <div className="space-y-3">
+                    <div className="grid min-h-[40vh] grid-rows-3 gap-2">
+                      {['top', 'center', 'bottom'].map((slot) => (
+                        <div
+                          key={slot}
+                          className={`flex flex-col items-center gap-3 ${
+                            slot === 'top'
+                              ? 'justify-start'
+                              : slot === 'bottom'
+                                ? 'justify-end'
+                                : 'justify-center'
+                          }`}
+                        >
+                          {(data.invitation.titleLinePosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.titleLine || 'Wedding Invitation'}</p>
+                          )}
+                          {(data.invitation.familiesLinePosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.familiesLine}</p>
+                          )}
+                          {(data.invitation.namesPosition || data.invitation.heroPosition || 'center') === slot && (
+                            <h2 className="font-script text-6xl md:text-8xl">{data.invitation.bride} & {data.invitation.groom}</h2>
+                          )}
+                          {(data.invitation.datePosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p className="text-xl">{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                          )}
+                          {(data.invitation.venuePosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p>{data.invitation.time} • {data.invitation.venue}</p>
+                          )}
+                          {(data.invitation.countdownPosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p className="text-sm">{countdown}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                     <div className="flex items-center justify-center gap-2">
                       <button type="button" className="action-btn" onClick={() => (isMuted ? startMusic() : setIsMuted(true))}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
                       <button type="button" className="action-btn" onClick={startMusic}>Play Music</button>
