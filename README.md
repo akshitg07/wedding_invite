@@ -12,6 +12,8 @@ Control plane password: `disha&akshit@2106`
 ## Control Plane capabilities
 
 - Edit all section titles, descriptions, and **section colors**
+- Edit invitation main title, families line, bride/groom names
+- Set main title block position (top / center / bottom)
 - Change title/body font color for each section independently
 - Choose section content position: top / center / bottom
 - Add internet animation URL per section as section background (GIF, video URL, or embeddable URL)

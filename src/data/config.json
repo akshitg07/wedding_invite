@@ -22,9 +22,11 @@
     }
   },
   "invitation": {
+    "titleLine": "Wedding Invitation",
     "bride": "Ananya",
     "groom": "Arjun",
     "familiesLine": "Together with their families",
+    "heroPosition": "center",
     "date": "2026-12-05",
     "time": "6:30 PM onwards",
     "venue": "The Royal Orchid Palace, Jaipur, Rajasthan",

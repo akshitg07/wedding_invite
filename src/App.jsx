@@ -56,6 +56,8 @@ const normalizeSections = (sections) =>
           ...item,
           shadow: item.shadow ?? false,
           fontFamily: item.fontFamily || 'Playfair Display',
+          transitionType: item.transitionType || 'fade',
+          transitionDuration: item.transitionDuration ?? 0.8,
         })),
       };
     }
@@ -94,9 +96,19 @@ const normalizeSections = (sections) =>
         ...item,
         shadow: false,
         fontFamily: 'Playfair Display',
+        transitionType: 'fade',
+        transitionDuration: 0.8,
       })),
     };
   });
+
+const mediaTransitionMap = {
+  none: { initial: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }, animate: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 } },
+  fade: { initial: { opacity: 0 }, animate: { opacity: 1 } },
+  slideUp: { initial: { opacity: 0, y: 40 }, animate: { opacity: 1, y: 0 } },
+  zoomIn: { initial: { opacity: 0, scale: 0.82 }, animate: { opacity: 1, scale: 1 } },
+  rotateIn: { initial: { opacity: 0, rotate: -8, scale: 0.9 }, animate: { opacity: 1, rotate: 0, scale: 1 } },
+};
 
 const transitionMap = {
   fadeUp: {
@@ -317,6 +329,8 @@ function App() {
               color: '#ffffff',
               shadow: false,
               fontFamily: 'Playfair Display',
+              transitionType: 'fade',
+              transitionDuration: 0.8,
               fontSize: 28,
               x: 24,
               y: 36,
@@ -371,6 +385,8 @@ function App() {
           src,
           shadow: false,
           fontFamily: 'Playfair Display',
+          transitionType: 'fade',
+          transitionDuration: 0.8,
           x: 8 + (idx % 3) * 26,
           y: type === 'photo' ? 28 : 58,
           w: type === 'photo' ? 24 : 38,
@@ -571,10 +587,19 @@ function App() {
             </div>
 
             <div className="panel grid md:grid-cols-2 gap-4">
+              <label className="field">Invitation Main Title<input value={data.invitation.titleLine || ''} onChange={(e) => updateInvitation('titleLine', e.target.value)} /></label>
+              <label className="field">Families Line<input value={data.invitation.familiesLine || ''} onChange={(e) => updateInvitation('familiesLine', e.target.value)} /></label>
               <label className="field">Bride Name<input value={data.invitation.bride} onChange={(e) => updateInvitation('bride', e.target.value)} /></label>
               <label className="field">Groom Name<input value={data.invitation.groom} onChange={(e) => updateInvitation('groom', e.target.value)} /></label>
               <label className="field">Venue<input value={data.invitation.venue} onChange={(e) => updateInvitation('venue', e.target.value)} /></label>
               <label className="field">Date<input type="date" value={data.invitation.date} onChange={(e) => updateInvitation('date', e.target.value)} /></label>
+              <label className="field">Main Title Position
+                <select value={data.invitation.heroPosition || 'center'} onChange={(e) => updateInvitation('heroPosition', e.target.value)}>
+                  <option value="top">Top</option>
+                  <option value="center">Center</option>
+                  <option value="bottom">Bottom</option>
+                </select>
+              </label>
               <label className="field">Theme<select value={data.themeKey} onChange={(e) => setData((prev) => ({ ...prev, themeKey: e.target.value, themeColors: config.themes[e.target.value] }))}><option value="royalRed">Royal Red</option><option value="roseGold">Rose Gold</option></select></label>
               <label className="field">Primary Color<input type="color" value={data.themeColors.primary} onChange={(e) => setData((prev) => ({ ...prev, themeColors: { ...prev.themeColors, primary: e.target.value } }))} /></label>
             </div>
@@ -707,11 +732,14 @@ function App() {
 
                 <div className="canvas" onDragOver={(e) => e.preventDefault()} onDrop={(e) => dropOnCanvas(e, section.id)}>
                   {section.media.map((item) => (
-                    <div
+                    <motion.div
                       key={item.id}
                       className="absolute media-item"
                       draggable
                       onDragStart={() => setDragMedia({ sectionId: section.id, mediaId: item.id })}
+                      initial={(mediaTransitionMap[item.transitionType || 'fade'] || mediaTransitionMap.fade).initial}
+                      animate={(mediaTransitionMap[item.transitionType || 'fade'] || mediaTransitionMap.fade).animate}
+                      transition={{ duration: item.transitionDuration ?? 0.8, ease: 'easeOut' }}
                       style={{
                         left: `${item.x}%`,
                         top: `${item.y}%`,
@@ -731,7 +759,7 @@ function App() {
                           {item.text}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
@@ -746,6 +774,25 @@ function App() {
                         <label className="field">Height %<input type="range" min="10" max="70" value={item.h} onChange={(e) => updateMedia(section.id, item.id, 'h', Number(e.target.value))} /></label>
                         <label className="field">Shadow
                           <input type="checkbox" checked={Boolean(item.shadow)} onChange={(e) => updateMedia(section.id, item.id, 'shadow', e.target.checked)} />
+                        </label>
+                        <label className="field">Transition
+                          <select value={item.transitionType || 'fade'} onChange={(e) => updateMedia(section.id, item.id, 'transitionType', e.target.value)}>
+                            <option value="none">None</option>
+                            <option value="fade">Fade</option>
+                            <option value="slideUp">Slide Up</option>
+                            <option value="zoomIn">Zoom In</option>
+                            <option value="rotateIn">Rotate In</option>
+                          </select>
+                        </label>
+                        <label className="field">Transition Duration ({Number(item.transitionDuration ?? 0.8).toFixed(1)}s)
+                          <input
+                            type="range"
+                            min="0.2"
+                            max="2.5"
+                            step="0.1"
+                            value={item.transitionDuration ?? 0.8}
+                            onChange={(e) => updateMedia(section.id, item.id, 'transitionDuration', Number(e.target.value))}
+                          />
                         </label>
                         {item.type === 'text' && (
                           <>
@@ -843,7 +890,16 @@ function App() {
               <div className="max-w-5xl w-full mx-auto text-center text-white space-y-5 relative">
                 <div className="relative z-10 space-y-5">
                 {idx === 0 && (
-                  <>
+                  <div
+                    className={`flex flex-col gap-3 min-h-[36vh] ${
+                      data.invitation.heroPosition === 'top'
+                        ? 'justify-start'
+                        : data.invitation.heroPosition === 'bottom'
+                          ? 'justify-end'
+                          : 'justify-center'
+                    }`}
+                  >
+                    <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.titleLine || 'Wedding Invitation'}</p>
                     <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.familiesLine}</p>
                     <h2 className="font-script text-6xl md:text-8xl">{data.invitation.bride} & {data.invitation.groom}</h2>
                     <p className="text-xl">{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
@@ -853,16 +909,20 @@ function App() {
                       <button type="button" className="action-btn" onClick={() => (isMuted ? startMusic() : setIsMuted(true))}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
                       <button type="button" className="action-btn" onClick={startMusic}>Play Music</button>
                     </div>
-                  </>
+                  </div>
                 )}
                 <h3 className="font-display text-4xl md:text-5xl" style={{ color: section.titleColor || '#ffffff' }}>{section.title}</h3>
                 <p className="max-w-3xl mx-auto text-lg" style={{ color: section.bodyColor || '#fff5e9' }}>{section.body}</p>
 
                 <div className="stage-output">
                   {section.media.map((item) => (
-                    <div
+                    <motion.div
                       key={item.id}
                       className="absolute"
+                      initial={(mediaTransitionMap[item.transitionType || 'fade'] || mediaTransitionMap.fade).initial}
+                      whileInView={(mediaTransitionMap[item.transitionType || 'fade'] || mediaTransitionMap.fade).animate}
+                      viewport={{ once: false, amount: 0.35 }}
+                      transition={{ duration: item.transitionDuration ?? 0.8, ease: 'easeOut' }}
                       style={{
                         left: `${item.x}%`,
                         top: `${item.y}%`,
@@ -882,7 +942,7 @@ function App() {
                           {item.text}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
                 </div>
