@@ -1092,16 +1092,16 @@ function App() {
             >
               {section.backgroundImageUrl && (
                 <div className="absolute inset-0 z-0 pointer-events-none">
-                  <img src={section.backgroundImageUrl} alt="" className="w-full h-full object-cover xl:object-contain" />
+                  <img src={section.backgroundImageUrl} alt="" className="w-full h-full object-contain" />
                   <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
                 </div>
               )}
               {!section.backgroundImageUrl && section.animationUrl && (
                 <div className="absolute inset-0 z-0 pointer-events-none">
                   {isImageBackground(section.animationUrl) ? (
-                    <img src={section.animationUrl} alt="" className="w-full h-full object-cover xl:object-contain" />
+                    <img src={section.animationUrl} alt="" className="w-full h-full object-contain" />
                   ) : isVideoBackground(section.animationUrl) ? (
-                    <video src={section.animationUrl} autoPlay loop muted playsInline preload="auto" className="w-full h-full object-cover xl:object-contain" />
+                    <video src={section.animationUrl} autoPlay loop muted playsInline preload="auto" className="w-full h-full object-contain" />
                   ) : (
                     <iframe title={`animation-bg-${section.id}`} src={section.animationUrl} className="w-full h-full border-0" loading="lazy" />
                   )}
