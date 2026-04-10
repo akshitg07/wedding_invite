@@ -509,7 +509,20 @@ function App() {
     }
   };
 
-  const getVideoMuted = (item) => videoUiMute[item.id] ?? (item.muted ?? true);
+  const getVideoMuted = (item) => {
+    if (item.muted ?? true) return true;
+    return videoUiMute[item.id] ?? true;
+  };
+
+  const enableVideoSound = (item) => {
+    if (item.muted ?? true) return;
+    setVideoUiMute((prev) => ({ ...prev, [item.id]: false }));
+  };
+
+  const disableVideoSound = (item) => {
+    if (item.muted ?? true) return;
+    setVideoUiMute((prev) => ({ ...prev, [item.id]: true }));
+  };
 
   const saveData = () => {
     const persist = async () => {
@@ -904,6 +917,10 @@ function App() {
                             loop
                             muted={getVideoMuted(item)}
                             playsInline
+                            onMouseEnter={() => enableVideoSound(item)}
+                            onMouseLeave={() => disableVideoSound(item)}
+                            onTouchStart={() => enableVideoSound(item)}
+                            onTouchEnd={() => disableVideoSound(item)}
                             className={item.shadow ? 'max-w-full max-h-full object-contain shadow-lg' : 'max-w-full max-h-full object-contain'}
                             style={{ borderRadius: `${item.videoRoundness ?? 0}%` }}
                           >
@@ -1134,18 +1151,15 @@ function App() {
                             loop
                             muted={getVideoMuted(item)}
                             playsInline
+                            onMouseEnter={() => enableVideoSound(item)}
+                            onMouseLeave={() => disableVideoSound(item)}
+                            onTouchStart={() => enableVideoSound(item)}
+                            onTouchEnd={() => disableVideoSound(item)}
                             className={item.shadow ? 'max-w-full max-h-full object-contain shadow-lg' : 'max-w-full max-h-full object-contain'}
                             style={{ borderRadius: `${item.videoRoundness ?? 0}%` }}
                           >
                             <source src={item.src} type="video/mp4" />
                           </video>
-                          <button
-                            type="button"
-                            className="absolute bottom-2 right-2 rounded-md bg-black/65 px-2 py-1 text-xs"
-                            onClick={() => setVideoUiMute((prev) => ({ ...prev, [item.id]: !getVideoMuted(item) }))}
-                          >
-                            {getVideoMuted(item) ? 'Unmute Video' : 'Mute Video'}
-                          </button>
                         </div>
                       ) : (
                         <div
