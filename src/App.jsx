@@ -37,6 +37,12 @@ const readAsDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
+const isImageBackground = (url = '') =>
+  /\.(gif|webp|png|jpg|jpeg)$/i.test(url) || /^data:image\//i.test(url);
+
+const isVideoBackground = (url = '') =>
+  /\.(mp4|webm|ogg)$/i.test(url) || /^data:video\//i.test(url);
+
 const tint = (hex, amount) => {
   const clean = hex.replace('#', '');
   const num = parseInt(clean, 16);
@@ -338,6 +344,23 @@ function App() {
       reordered.splice(targetIndex, 0, picked);
       return { ...prev, sections: reordered };
     });
+  };
+
+  const resetSectionMediaPositions = (sectionId) => {
+    setData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((section) => {
+        if (section.id !== sectionId) return section;
+        return {
+          ...section,
+          media: section.media.map((item) => ({
+            ...item,
+            x: Math.max(0, Math.min(90, Number(((100 - (item.w || 20)) / 2).toFixed(2)))),
+            y: Math.max(0, Math.min(90, Number(((100 - (item.h || 20)) / 2).toFixed(2)))),
+          })),
+        };
+      }),
+    }));
   };
 
   const addSection = () => {
@@ -940,6 +963,11 @@ function App() {
                 </div>
 
                 <div className="space-y-3">
+                  <div className="flex justify-end">
+                    <button type="button" className="action-btn" onClick={() => resetSectionMediaPositions(section.id)}>
+                      Reset Media Positions to Center
+                    </button>
+                  </div>
                   {section.media.map((item) => (
                     <div key={`${item.id}-controls`} className="media-controls">
                       <p className="text-xs font-semibold">{item.type.toUpperCase()} ({item.id})</p>
@@ -1070,10 +1098,10 @@ function App() {
               )}
               {!section.backgroundImageUrl && section.animationUrl && (
                 <div className="absolute inset-0 z-0 pointer-events-none">
-                  {section.animationUrl.match(/\.(gif|webp|png|jpg|jpeg)$/i) ? (
+                  {isImageBackground(section.animationUrl) ? (
                     <img src={section.animationUrl} alt="" className="w-full h-full object-cover xl:object-contain" />
-                  ) : section.animationUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-                    <video src={section.animationUrl} autoPlay loop muted playsInline className="w-full h-full object-cover xl:object-contain" />
+                  ) : isVideoBackground(section.animationUrl) ? (
+                    <video src={section.animationUrl} autoPlay loop muted playsInline preload="auto" className="w-full h-full object-cover xl:object-contain" />
                   ) : (
                     <iframe title={`animation-bg-${section.id}`} src={section.animationUrl} className="w-full h-full border-0" loading="lazy" />
                   )}
