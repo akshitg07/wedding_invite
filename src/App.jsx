@@ -59,6 +59,8 @@ const normalizeSections = (sections) =>
         backgroundImageUrl: section.backgroundImageUrl || '',
         contentPosition: section.contentPosition || 'center',
         transition: section.transition || 'fadeUp',
+        titleSize: section.titleSize ?? 52,
+        bodySize: section.bodySize ?? 22,
         media: (section.media || []).map((item) => ({
           ...item,
           shadow: item.shadow ?? false,
@@ -102,6 +104,8 @@ const normalizeSections = (sections) =>
       backgroundImageUrl: section.backgroundImageUrl || '',
       contentPosition: section.contentPosition || 'center',
       transition: section.transition || 'fadeUp',
+      titleSize: section.titleSize ?? 52,
+      bodySize: section.bodySize ?? 22,
       media: [...photos, ...videos].map((item) => ({
         ...item,
         shadow: false,
@@ -152,6 +156,12 @@ const normalizeInvitation = (invitation = {}) => {
     datePosition: invitation.datePosition || fallbackPosition,
     venuePosition: invitation.venuePosition || fallbackPosition,
     countdownPosition: invitation.countdownPosition || fallbackPosition,
+    titleLineSize: invitation.titleLineSize ?? 12,
+    familiesLineSize: invitation.familiesLineSize ?? 12,
+    namesSize: invitation.namesSize ?? 84,
+    dateSize: invitation.dateSize ?? 24,
+    venueSize: invitation.venueSize ?? 16,
+    countdownSize: invitation.countdownSize ?? 14,
   };
 };
 
@@ -348,6 +358,8 @@ function App() {
           backgroundImageUrl: '',
           contentPosition: 'center',
           transition: 'fadeUp',
+          titleSize: 52,
+          bodySize: 22,
           media: [],
         },
       ],
@@ -516,13 +528,14 @@ function App() {
         } catch {
           setNotice('Saved to server successfully. Local browser cache skipped due storage limit.');
         }
-      } catch {
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : 'server not reachable';
         try {
           localStorage.setItem(STORAGE_KEY, snapshot);
           setSavedSnapshot(snapshot);
-          setNotice('Server save failed. Saved locally in this browser only.');
+          setNotice(`Server save failed (${reason}). Saved only in this browser, so phones/other devices will still show old data.`);
         } catch {
-          setNotice('Save failed: browser storage limit reached. Remove some large media and try again.');
+          setNotice(`Save failed (${reason}) and browser storage limit was reached. Remove large media and retry so changes can sync to other devices.`);
         }
       }
     };
@@ -702,8 +715,26 @@ function App() {
                     </select>
                   </label>
                   <label className="field">Theme<select value={data.themeKey} onChange={(e) => setData((prev) => ({ ...prev, themeKey: e.target.value, themeColors: config.themes[e.target.value] }))}><option value="royalRed">Royal Red</option><option value="roseGold">Rose Gold</option></select></label>
-                  <label className="field">Primary Color<input type="color" value={data.themeColors.primary} onChange={(e) => setData((prev) => ({ ...prev, themeColors: { ...prev.themeColors, primary: e.target.value } }))} /></label>
-                </div>
+              <label className="field">Primary Color<input type="color" value={data.themeColors.primary} onChange={(e) => setData((prev) => ({ ...prev, themeColors: { ...prev.themeColors, primary: e.target.value } }))} /></label>
+              <label className="field">Title Line Size ({data.invitation.titleLineSize ?? 12}px)
+                <input type="range" min="10" max="40" value={data.invitation.titleLineSize ?? 12} onChange={(e) => updateInvitation('titleLineSize', Number(e.target.value))} />
+              </label>
+              <label className="field">Families Line Size ({data.invitation.familiesLineSize ?? 12}px)
+                <input type="range" min="10" max="40" value={data.invitation.familiesLineSize ?? 12} onChange={(e) => updateInvitation('familiesLineSize', Number(e.target.value))} />
+              </label>
+              <label className="field">Names Size ({data.invitation.namesSize ?? 84}px)
+                <input type="range" min="28" max="140" value={data.invitation.namesSize ?? 84} onChange={(e) => updateInvitation('namesSize', Number(e.target.value))} />
+              </label>
+              <label className="field">Date Size ({data.invitation.dateSize ?? 24}px)
+                <input type="range" min="14" max="56" value={data.invitation.dateSize ?? 24} onChange={(e) => updateInvitation('dateSize', Number(e.target.value))} />
+              </label>
+              <label className="field">Venue/Time Size ({data.invitation.venueSize ?? 16}px)
+                <input type="range" min="12" max="40" value={data.invitation.venueSize ?? 16} onChange={(e) => updateInvitation('venueSize', Number(e.target.value))} />
+              </label>
+              <label className="field">Countdown Size ({data.invitation.countdownSize ?? 14}px)
+                <input type="range" min="10" max="36" value={data.invitation.countdownSize ?? 14} onChange={(e) => updateInvitation('countdownSize', Number(e.target.value))} />
+              </label>
+            </div>
 
             <div className="panel space-y-3">
               <h3 className="font-display text-xl" style={{ color: theme.primary }}>Presets (max 5)</h3>
@@ -783,6 +814,12 @@ function App() {
                   <label className="field">Section Color<input type="color" value={section.sectionColor} onChange={(e) => updateSection(section.id, 'sectionColor', e.target.value)} /></label>
                   <label className="field">Title Font Color<input type="color" value={section.titleColor || '#ffffff'} onChange={(e) => updateSection(section.id, 'titleColor', e.target.value)} /></label>
                   <label className="field">Body Font Color<input type="color" value={section.bodyColor || '#fff5e9'} onChange={(e) => updateSection(section.id, 'bodyColor', e.target.value)} /></label>
+                  <label className="field">Section Title Size ({section.titleSize ?? 52}px)
+                    <input type="range" min="24" max="100" value={section.titleSize ?? 52} onChange={(e) => updateSection(section.id, 'titleSize', Number(e.target.value))} />
+                  </label>
+                  <label className="field">Section Body Size ({section.bodySize ?? 22}px)
+                    <input type="range" min="14" max="48" value={section.bodySize ?? 22} onChange={(e) => updateSection(section.id, 'bodySize', Number(e.target.value))} />
+                  </label>
                   <label className="field">Content Position
                     <select value={section.contentPosition || 'center'} onChange={(e) => updateSection(section.id, 'contentPosition', e.target.value)}>
                       <option value="top">Top</option>
@@ -949,13 +986,13 @@ function App() {
                           </>
                         )}
                       </div>
-                      {item.type === 'photo' && (
+                      {(item.type === 'photo' || item.type === 'video' || item.type === 'text') && (
                         <button
                           type="button"
                           className="mt-2 rounded-md bg-red-700 px-3 py-1 text-xs font-semibold text-white"
                           onClick={() => removeMedia(section.id, item.id)}
                         >
-                          Remove Photo
+                          {item.type === 'photo' ? 'Remove Photo' : item.type === 'video' ? 'Remove Video' : 'Remove Text'}
                         </button>
                       )}
                     </div>
@@ -1043,22 +1080,22 @@ function App() {
                           }`}
                         >
                           {(data.invitation.titleLinePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.titleLine || 'Wedding Invitation'}</p>
+                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.titleLineSize ?? 12}px` }}>{data.invitation.titleLine || 'Wedding Invitation'}</p>
                           )}
                           {(data.invitation.familiesLinePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p className="uppercase tracking-[0.2em] text-xs">{data.invitation.familiesLine}</p>
+                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.familiesLineSize ?? 12}px` }}>{data.invitation.familiesLine}</p>
                           )}
                           {(data.invitation.namesPosition || data.invitation.heroPosition || 'center') === slot && (
-                            <h2 className="font-script text-6xl md:text-8xl">{data.invitation.bride} & {data.invitation.groom}</h2>
+                            <h2 className="font-script" style={{ fontSize: `${data.invitation.namesSize ?? 84}px`, lineHeight: 1 }}>{data.invitation.bride} & {data.invitation.groom}</h2>
                           )}
                           {(data.invitation.datePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p className="text-xl">{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            <p style={{ fontSize: `${data.invitation.dateSize ?? 24}px` }}>{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
                           )}
                           {(data.invitation.venuePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p>{data.invitation.time} • {data.invitation.venue}</p>
+                            <p style={{ fontSize: `${data.invitation.venueSize ?? 16}px` }}>{data.invitation.time} • {data.invitation.venue}</p>
                           )}
                           {(data.invitation.countdownPosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p className="text-sm">{countdown}</p>
+                            <p style={{ fontSize: `${data.invitation.countdownSize ?? 14}px` }}>{countdown}</p>
                           )}
                         </div>
                       ))}
@@ -1069,8 +1106,8 @@ function App() {
                     </div>
                   </div>
                 )}
-                <h3 className="font-display text-4xl md:text-5xl" style={{ color: section.titleColor || '#ffffff' }}>{section.title}</h3>
-                <p className="max-w-3xl mx-auto text-lg" style={{ color: section.bodyColor || '#fff5e9' }}>{section.body}</p>
+                <h3 className="font-display" style={{ color: section.titleColor || '#ffffff', fontSize: `${section.titleSize ?? 52}px`, lineHeight: 1.15 }}>{section.title}</h3>
+                <p className="max-w-3xl mx-auto" style={{ color: section.bodyColor || '#fff5e9', fontSize: `${section.bodySize ?? 22}px`, lineHeight: 1.45 }}>{section.body}</p>
 
                 <div className="stage-output">
                   {section.media.map((item) => (
