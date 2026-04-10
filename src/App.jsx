@@ -62,6 +62,7 @@ const normalizeSections = (sections) =>
         media: (section.media || []).map((item) => ({
           ...item,
           shadow: item.shadow ?? false,
+          videoRoundness: item.videoRoundness ?? 0,
           fontFamily: item.fontFamily || 'Playfair Display',
           transitionType: item.transitionType || 'fade',
           transitionDuration: item.transitionDuration ?? 0.8,
@@ -104,6 +105,7 @@ const normalizeSections = (sections) =>
       media: [...photos, ...videos].map((item) => ({
         ...item,
         shadow: false,
+        videoRoundness: 0,
         fontFamily: 'Playfair Display',
         transitionType: 'fade',
         transitionDuration: 0.8,
@@ -198,6 +200,7 @@ function App() {
   );
   const [musicUploadProgress, setMusicUploadProgress] = useState(0);
   const [presetName, setPresetName] = useState('');
+  const [videoUiMute, setVideoUiMute] = useState({});
   const audioRef = useRef(null);
 
   const theme = useMemo(
@@ -419,6 +422,7 @@ function App() {
           type,
           src,
           shadow: false,
+          videoRoundness: 0,
           fontFamily: 'Playfair Display',
           transitionType: 'fade',
           transitionDuration: 0.8,
@@ -492,6 +496,8 @@ function App() {
       playPromise.catch(() => setNotice('Unable to autoplay. Please click Play Music again.'));
     }
   };
+
+  const getVideoMuted = (item) => videoUiMute[item.id] ?? (item.muted ?? true);
 
   const saveData = () => {
     const persist = async () => {
@@ -855,7 +861,18 @@ function App() {
                       {item.type === 'photo' ? (
                         <img src={item.src} alt="Uploaded" className={`w-full h-full object-contain rounded-md ${item.shadow ? 'shadow-lg' : ''}`} />
                       ) : item.type === 'video' ? (
-                        <video autoPlay loop muted={item.muted ?? true} playsInline className="w-full h-full object-contain"><source src={item.src} type="video/mp4" /></video>
+                        <div className="w-full h-full flex items-center justify-center">
+                          <video
+                            autoPlay
+                            loop
+                            muted={getVideoMuted(item)}
+                            playsInline
+                            className={item.shadow ? 'max-w-full max-h-full object-contain shadow-lg' : 'max-w-full max-h-full object-contain'}
+                            style={{ borderRadius: `${item.videoRoundness ?? 0}%` }}
+                          >
+                            <source src={item.src} type="video/mp4" />
+                          </video>
+                        </div>
                       ) : (
                         <div
                           className="w-full h-full flex items-center justify-center text-center px-2 rounded-md"
@@ -877,14 +894,24 @@ function App() {
                         <label className="field">Y %<input type="range" min="0" max="90" value={item.y} onChange={(e) => updateMedia(section.id, item.id, 'y', Number(e.target.value))} /></label>
                         <label className="field">Width %<input type="range" min="10" max="80" value={item.w} onChange={(e) => updateMedia(section.id, item.id, 'w', Number(e.target.value))} /></label>
                         <label className="field">Height %<input type="range" min="10" max="70" value={item.h} onChange={(e) => updateMedia(section.id, item.id, 'h', Number(e.target.value))} /></label>
-                        {item.type !== 'video' && (
-                          <label className="field">Shadow
-                            <input type="checkbox" checked={Boolean(item.shadow)} onChange={(e) => updateMedia(section.id, item.id, 'shadow', e.target.checked)} />
-                          </label>
-                        )}
+                        <label className="field">Shadow
+                          <input type="checkbox" checked={Boolean(item.shadow)} onChange={(e) => updateMedia(section.id, item.id, 'shadow', e.target.checked)} />
+                        </label>
                         {item.type === 'video' && (
                           <label className="field">Mute Video
                             <input type="checkbox" checked={item.muted ?? true} onChange={(e) => updateMedia(section.id, item.id, 'muted', e.target.checked)} />
+                          </label>
+                        )}
+                        {item.type === 'video' && (
+                          <label className="field">Video Roundness ({item.videoRoundness ?? 0}%)
+                            <input
+                              type="range"
+                              min="0"
+                              max="50"
+                              step="1"
+                              value={item.videoRoundness ?? 0}
+                              onChange={(e) => updateMedia(section.id, item.id, 'videoRoundness', Number(e.target.value))}
+                            />
                           </label>
                         )}
                         <label className="field">Transition
@@ -1064,7 +1091,25 @@ function App() {
                       {item.type === 'photo' ? (
                         <img src={item.src} alt="Wedding" className={`w-full h-full object-contain rounded-xl ${item.shadow ? 'shadow-lg' : ''}`} />
                       ) : item.type === 'video' ? (
-                        <video autoPlay loop muted={item.muted ?? true} playsInline className="w-full h-full object-contain"><source src={item.src} type="video/mp4" /></video>
+                        <div className="w-full h-full relative flex items-center justify-center">
+                          <video
+                            autoPlay
+                            loop
+                            muted={getVideoMuted(item)}
+                            playsInline
+                            className={item.shadow ? 'max-w-full max-h-full object-contain shadow-lg' : 'max-w-full max-h-full object-contain'}
+                            style={{ borderRadius: `${item.videoRoundness ?? 0}%` }}
+                          >
+                            <source src={item.src} type="video/mp4" />
+                          </video>
+                          <button
+                            type="button"
+                            className="absolute bottom-2 right-2 rounded-md bg-black/65 px-2 py-1 text-xs"
+                            onClick={() => setVideoUiMute((prev) => ({ ...prev, [item.id]: !getVideoMuted(item) }))}
+                          >
+                            {getVideoMuted(item) ? 'Unmute Video' : 'Mute Video'}
+                          </button>
+                        </div>
                       ) : (
                         <div
                           className={`w-full h-full flex items-center justify-center text-center px-3 rounded-xl ${item.shadow ? 'shadow-lg' : ''}`}
