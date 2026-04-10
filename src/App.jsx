@@ -58,6 +58,7 @@ const normalizeSections = (sections) =>
           fontFamily: item.fontFamily || 'Playfair Display',
           transitionType: item.transitionType || 'fade',
           transitionDuration: item.transitionDuration ?? 0.8,
+          muted: item.type === 'video' ? item.muted ?? true : item.muted,
         })),
       };
     }
@@ -76,6 +77,7 @@ const normalizeSections = (sections) =>
       id: `${section.id}-video-${videoIdx}`,
       type: 'video',
       src,
+      muted: true,
       x: 8 + (videoIdx % 2) * 45,
       y: 54,
       w: 38,
@@ -98,6 +100,7 @@ const normalizeSections = (sections) =>
         fontFamily: 'Playfair Display',
         transitionType: 'fade',
         transitionDuration: 0.8,
+        muted: item.type === 'video' ? true : item.muted,
       })),
     };
   });
@@ -406,6 +409,7 @@ function App() {
           fontFamily: 'Playfair Display',
           transitionType: 'fade',
           transitionDuration: 0.8,
+          muted: type === 'video' ? true : undefined,
           x: 8 + (idx % 3) * 26,
           y: type === 'photo' ? 28 : 58,
           w: type === 'photo' ? 24 : 38,
@@ -811,7 +815,7 @@ function App() {
                       {item.type === 'photo' ? (
                         <img src={item.src} alt="Uploaded" className={`w-full h-full object-contain rounded-md ${item.shadow ? 'shadow-lg' : ''}`} />
                       ) : item.type === 'video' ? (
-                        <video controls className={`w-full h-full rounded-md ${item.shadow ? 'shadow-lg' : ''}`}><source src={item.src} type="video/mp4" /></video>
+                        <video autoPlay loop muted={item.muted ?? true} playsInline className="w-full h-full object-contain"><source src={item.src} type="video/mp4" /></video>
                       ) : (
                         <div
                           className="w-full h-full flex items-center justify-center text-center px-2 rounded-md"
@@ -833,9 +837,16 @@ function App() {
                         <label className="field">Y %<input type="range" min="0" max="90" value={item.y} onChange={(e) => updateMedia(section.id, item.id, 'y', Number(e.target.value))} /></label>
                         <label className="field">Width %<input type="range" min="10" max="80" value={item.w} onChange={(e) => updateMedia(section.id, item.id, 'w', Number(e.target.value))} /></label>
                         <label className="field">Height %<input type="range" min="10" max="70" value={item.h} onChange={(e) => updateMedia(section.id, item.id, 'h', Number(e.target.value))} /></label>
-                        <label className="field">Shadow
-                          <input type="checkbox" checked={Boolean(item.shadow)} onChange={(e) => updateMedia(section.id, item.id, 'shadow', e.target.checked)} />
-                        </label>
+                        {item.type !== 'video' && (
+                          <label className="field">Shadow
+                            <input type="checkbox" checked={Boolean(item.shadow)} onChange={(e) => updateMedia(section.id, item.id, 'shadow', e.target.checked)} />
+                          </label>
+                        )}
+                        {item.type === 'video' && (
+                          <label className="field">Mute Video
+                            <input type="checkbox" checked={item.muted ?? true} onChange={(e) => updateMedia(section.id, item.id, 'muted', e.target.checked)} />
+                          </label>
+                        )}
                         <label className="field">Transition
                           <select value={item.transitionType || 'fade'} onChange={(e) => updateMedia(section.id, item.id, 'transitionType', e.target.value)}>
                             <option value="none">None</option>
@@ -1013,7 +1024,7 @@ function App() {
                       {item.type === 'photo' ? (
                         <img src={item.src} alt="Wedding" className={`w-full h-full object-contain rounded-xl ${item.shadow ? 'shadow-lg' : ''}`} />
                       ) : item.type === 'video' ? (
-                        <video controls className={`w-full h-full rounded-xl ${item.shadow ? 'shadow-lg' : ''}`}><source src={item.src} type="video/mp4" /></video>
+                        <video autoPlay loop muted={item.muted ?? true} playsInline className="w-full h-full object-contain"><source src={item.src} type="video/mp4" /></video>
                       ) : (
                         <div
                           className={`w-full h-full flex items-center justify-center text-center px-3 rounded-xl ${item.shadow ? 'shadow-lg' : ''}`}
