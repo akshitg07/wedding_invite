@@ -43,12 +43,6 @@ const isImageBackground = (url = '') =>
 const isVideoBackground = (url = '') =>
   /\.(mp4|webm|ogg)$/i.test(url) || /^data:video\//i.test(url);
 
-const responsiveFont = (size, min = 12) => {
-  const safe = Number(size) || min;
-  const preferred = Math.max(min, Math.round(safe * 0.075));
-  return `clamp(${min}px, ${preferred}vw, ${safe}px)`;
-};
-
 const tint = (hex, amount) => {
   const clean = hex.replace('#', '');
   const num = parseInt(clean, 16);
@@ -1102,7 +1096,7 @@ function App() {
               style={{
                 backgroundColor: section.sectionColor || tint(theme.primary, idx * 8),
                 aspectRatio: bgRatio || undefined,
-                minHeight: bgRatio ? 'max(100vh, 520px)' : undefined,
+                minHeight: bgRatio ? 'auto' : undefined,
               }}
               initial={transitionMap[section.transition || 'fadeUp'].initial}
               whileInView={transitionMap[section.transition || 'fadeUp'].whileInView}
@@ -1163,22 +1157,22 @@ function App() {
                           }`}
                         >
                           {(data.invitation.titleLinePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: responsiveFont(data.invitation.titleLineSize ?? 12, 10) }}>{data.invitation.titleLine || 'Wedding Invitation'}</p>
+                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.titleLineSize ?? 12}px` }}>{data.invitation.titleLine || 'Wedding Invitation'}</p>
                           )}
                           {(data.invitation.familiesLinePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: responsiveFont(data.invitation.familiesLineSize ?? 12, 10) }}>{data.invitation.familiesLine}</p>
+                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.familiesLineSize ?? 12}px` }}>{data.invitation.familiesLine}</p>
                           )}
                           {(data.invitation.namesPosition || data.invitation.heroPosition || 'center') === slot && (
-                            <h2 className="font-script" style={{ fontSize: responsiveFont(data.invitation.namesSize ?? 84, 28), lineHeight: 1 }}>{data.invitation.bride} & {data.invitation.groom}</h2>
+                            <h2 className="font-script" style={{ fontSize: `${data.invitation.namesSize ?? 84}px`, lineHeight: 1 }}>{data.invitation.bride} & {data.invitation.groom}</h2>
                           )}
                           {(data.invitation.datePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p style={{ fontSize: responsiveFont(data.invitation.dateSize ?? 24, 14) }}>{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            <p style={{ fontSize: `${data.invitation.dateSize ?? 24}px` }}>{new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
                           )}
                           {(data.invitation.venuePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p style={{ fontSize: responsiveFont(data.invitation.venueSize ?? 16, 12) }}>{data.invitation.time} • {data.invitation.venue}</p>
+                            <p style={{ fontSize: `${data.invitation.venueSize ?? 16}px` }}>{data.invitation.time} • {data.invitation.venue}</p>
                           )}
                           {(data.invitation.countdownPosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p style={{ fontSize: responsiveFont(data.invitation.countdownSize ?? 14, 11) }}>{countdown}</p>
+                            <p style={{ fontSize: `${data.invitation.countdownSize ?? 14}px` }}>{countdown}</p>
                           )}
                         </div>
                       ))}
@@ -1189,8 +1183,8 @@ function App() {
                     </div>
                   </div>
                 )}
-                <h3 className="font-display" style={{ color: section.titleColor || '#ffffff', fontSize: responsiveFont(section.titleSize ?? 52, 24), lineHeight: 1.15 }}>{section.title}</h3>
-                <p className="max-w-3xl mx-auto" style={{ color: section.bodyColor || '#fff5e9', fontSize: responsiveFont(section.bodySize ?? 22, 14), lineHeight: 1.45 }}>{section.body}</p>
+                <h3 className="font-display" style={{ color: section.titleColor || '#ffffff', fontSize: `${section.titleSize ?? 52}px`, lineHeight: 1.15 }}>{section.title}</h3>
+                <p className="max-w-3xl mx-auto" style={{ color: section.bodyColor || '#fff5e9', fontSize: `${section.bodySize ?? 22}px`, lineHeight: 1.45 }}>{section.body}</p>
 
                 <div className="stage-output">
                   {section.media.map((item) => (
