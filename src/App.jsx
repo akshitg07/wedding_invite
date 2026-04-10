@@ -7,7 +7,7 @@ const CONTROL_PANEL_PASSWORD = 'disha&akshit@2106';
 const CONTROL_UNLOCK_KEY = 'wedding_invite_control_unlocked';
 const MAX_IMAGE_MB = 15;
 const MAX_VIDEO_MB = 40;
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
 
 const compressImageFile = (file) =>
@@ -27,6 +27,13 @@ const compressImageFile = (file) =>
       };
       img.src = reader.result;
     };
+    reader.readAsDataURL(file);
+  });
+
+const readAsDataUrl = (file) =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
     reader.readAsDataURL(file);
   });
 
@@ -307,6 +314,19 @@ function App() {
     }));
   };
 
+  const moveSection = (sectionId, direction) => {
+    setData((prev) => {
+      const currentIndex = prev.sections.findIndex((section) => section.id === sectionId);
+      if (currentIndex < 0) return prev;
+      const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      if (targetIndex < 0 || targetIndex >= prev.sections.length) return prev;
+      const reordered = [...prev.sections];
+      const [picked] = reordered.splice(currentIndex, 1);
+      reordered.splice(targetIndex, 0, picked);
+      return { ...prev, sections: reordered };
+    });
+  };
+
   const addSection = () => {
     if (!newSectionTitle.trim()) return;
     setData((prev) => ({
@@ -385,17 +405,10 @@ function App() {
 
     const encoded =
       type === 'photo'
-        ? await Promise.all(valid.map((file) => compressImageFile(file)))
-        : await Promise.all(
-            valid.map(
-              (file) =>
-                new Promise((resolve) => {
-                  const reader = new FileReader();
-                  reader.onload = () => resolve(reader.result);
-                  reader.readAsDataURL(file);
-                })
-            )
-          );
+        ? await Promise.all(
+            valid.map((file) => (file.type === 'image/gif' ? readAsDataUrl(file) : compressImageFile(file)))
+          )
+        : await Promise.all(valid.map((file) => readAsDataUrl(file)));
 
     setData((prev) => ({
       ...prev,
@@ -445,11 +458,28 @@ function App() {
     const file = Array.from(files || [])[0];
     if (!file) return;
     if (!IMAGE_TYPES.includes(file.type)) {
-      setNotice('Background image must be JPG/PNG/WEBP.');
+      setNotice('Background image must be JPG/PNG/WEBP/GIF.');
       return;
     }
-    const src = await compressImageFile(file);
+    const src = file.type === 'image/gif' ? await readAsDataUrl(file) : await compressImageFile(file);
     updateSection(sectionId, 'backgroundImageUrl', src);
+    if (file.type === 'image/gif') {
+      updateSection(sectionId, 'animationUrl', src);
+      updateSection(sectionId, 'backgroundImageUrl', '');
+    }
+  };
+
+  const uploadSectionBackgroundAnimation = async (sectionId, files) => {
+    const file = Array.from(files || [])[0];
+    if (!file) return;
+    const allowed = ['image/gif', ...VIDEO_TYPES];
+    if (!allowed.includes(file.type)) {
+      setNotice('Background animation must be GIF/MP4/WEBM/OGG.');
+      return;
+    }
+    const src = await readAsDataUrl(file);
+    updateSection(sectionId, 'animationUrl', src);
+    updateSection(sectionId, 'backgroundImageUrl', '');
   };
 
   const startMusic = () => {
@@ -735,7 +765,13 @@ function App() {
 
             {data.sections.map((section) => (
               <div key={section.id} className="panel space-y-4">
-                <h3 className="font-display text-xl" style={{ color: theme.primary }}>{section.title || 'Untitled Section'}</h3>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-display text-xl" style={{ color: theme.primary }}>{section.title || 'Untitled Section'}</h3>
+                  <div className="flex gap-2">
+                    <button type="button" className="action-btn" onClick={() => moveSection(section.id, 'up')}>Move Up</button>
+                    <button type="button" className="action-btn" onClick={() => moveSection(section.id, 'down')}>Move Down</button>
+                  </div>
+                </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <label className="field">Title<input value={section.title} onChange={(e) => updateSection(section.id, 'title', e.target.value)} /></label>
                   <label className="field">Section Color<input type="color" value={section.sectionColor} onChange={(e) => updateSection(section.id, 'sectionColor', e.target.value)} /></label>
@@ -765,7 +801,11 @@ function App() {
                   </label>
                   <div className="field">
                     <span>Upload Section Background</span>
-                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => uploadSectionBackground(section.id, e.target.files)} />
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(e) => uploadSectionBackground(section.id, e.target.files)} />
+                  </div>
+                  <div className="field">
+                    <span>Upload GIF/Video Background</span>
+                    <input type="file" accept="image/gif,video/mp4,video/webm,video/ogg" onChange={(e) => uploadSectionBackgroundAnimation(section.id, e.target.files)} />
                   </div>
                 </div>
                 <label className="field">Body<textarea rows={3} value={section.body} onChange={(e) => updateSection(section.id, 'body', e.target.value)} /></label>
