@@ -217,6 +217,7 @@ function App() {
   const [musicUploadProgress, setMusicUploadProgress] = useState(0);
   const [presetName, setPresetName] = useState('');
   const [videoUiMute, setVideoUiMute] = useState({});
+  const [sectionBgRatio, setSectionBgRatio] = useState({});
   const audioRef = useRef(null);
 
   const theme = useMemo(
@@ -545,6 +546,12 @@ function App() {
   const disableVideoSound = (item) => {
     if (item.muted ?? true) return;
     setVideoUiMute((prev) => ({ ...prev, [item.id]: true }));
+  };
+
+  const setSectionBackgroundRatio = (sectionId, width, height) => {
+    if (!width || !height) return;
+    const ratio = Number((width / height).toFixed(4));
+    setSectionBgRatio((prev) => (prev[sectionId] === ratio ? prev : { ...prev, [sectionId]: ratio }));
   };
 
   const saveData = () => {
@@ -1074,7 +1081,9 @@ function App() {
             )}
           </AnimatePresence>
 
-          {data.sections.map((section, idx) => (
+          {data.sections.map((section, idx) => {
+            const bgRatio = sectionBgRatio[section.id];
+            return (
             <motion.section
               key={section.id}
               className={`min-h-screen px-4 py-10 md:py-16 relative overflow-hidden flex ${
@@ -1084,7 +1093,11 @@ function App() {
                     ? 'items-end'
                     : 'items-center'
               }`}
-              style={{ backgroundColor: section.sectionColor || tint(theme.primary, idx * 8) }}
+              style={{
+                backgroundColor: section.sectionColor || tint(theme.primary, idx * 8),
+                aspectRatio: bgRatio || undefined,
+                minHeight: bgRatio ? 'auto' : undefined,
+              }}
               initial={transitionMap[section.transition || 'fadeUp'].initial}
               whileInView={transitionMap[section.transition || 'fadeUp'].whileInView}
               viewport={{ once: false, amount: 0.3 }}
@@ -1092,16 +1105,35 @@ function App() {
             >
               {section.backgroundImageUrl && (
                 <div className="absolute inset-0 z-0 pointer-events-none">
-                  <img src={section.backgroundImageUrl} alt="" className="w-full h-full object-contain" />
+                  <img
+                    src={section.backgroundImageUrl}
+                    alt=""
+                    className="w-full h-full object-contain"
+                    onLoad={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
+                  />
                   <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
                 </div>
               )}
               {!section.backgroundImageUrl && section.animationUrl && (
                 <div className="absolute inset-0 z-0 pointer-events-none">
                   {isImageBackground(section.animationUrl) ? (
-                    <img src={section.animationUrl} alt="" className="w-full h-full object-contain" />
+                    <img
+                      src={section.animationUrl}
+                      alt=""
+                      className="w-full h-full object-contain"
+                      onLoad={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
+                    />
                   ) : isVideoBackground(section.animationUrl) ? (
-                    <video src={section.animationUrl} autoPlay loop muted playsInline preload="auto" className="w-full h-full object-contain" />
+                    <video
+                      src={section.animationUrl}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="auto"
+                      className="w-full h-full object-contain"
+                      onLoadedMetadata={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.videoWidth, e.currentTarget.videoHeight)}
+                    />
                   ) : (
                     <iframe title={`animation-bg-${section.id}`} src={section.animationUrl} className="w-full h-full border-0" loading="lazy" />
                   )}
@@ -1203,7 +1235,8 @@ function App() {
                 </div>
               </div>
             </motion.section>
-          ))}
+          );
+          })}
         </main>
       )}
     </div>
