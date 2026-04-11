@@ -1083,6 +1083,8 @@ function App() {
 
           {data.sections.map((section, idx) => {
             const bgRatio = sectionBgRatio[section.id];
+            const hasMediaBackground = Boolean(section.backgroundImageUrl || section.animationUrl);
+            const useAspectRatioSizing = Boolean(bgRatio && section.animationUrl && !section.backgroundImageUrl);
             return (
             <motion.section
               key={section.id}
@@ -1094,9 +1096,9 @@ function App() {
                     : 'items-center'
               }`}
               style={{
-                backgroundColor: section.sectionColor || tint(theme.primary, idx * 8),
-                aspectRatio: bgRatio || undefined,
-                minHeight: bgRatio ? 'auto' : undefined,
+                backgroundColor: hasMediaBackground ? '#000000' : section.sectionColor || tint(theme.primary, idx * 8),
+                aspectRatio: useAspectRatioSizing ? bgRatio : undefined,
+                minHeight: useAspectRatioSizing ? 'auto' : undefined,
               }}
               initial={transitionMap[section.transition || 'fadeUp'].initial}
               whileInView={transitionMap[section.transition || 'fadeUp'].whileInView}
