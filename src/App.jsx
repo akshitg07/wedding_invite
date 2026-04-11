@@ -1144,23 +1144,42 @@ function App() {
                 <div className="relative z-10 space-y-5">
                 {idx === 0 && (
                   <div className="space-y-3">
-                    <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3 px-2 text-center">
-                      <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.titleLineSize ?? 12}px` }}>
-                        {data.invitation.titleLine || 'Wedding Invitation'}
-                      </p>
-                      <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.familiesLineSize ?? 12}px` }}>
-                        {data.invitation.familiesLine}
-                      </p>
-                      <h2 className="font-script leading-tight" style={{ fontSize: `${data.invitation.namesSize ?? 84}px` }}>
-                        {data.invitation.bride} & {data.invitation.groom}
-                      </h2>
-                      <p style={{ fontSize: `${data.invitation.dateSize ?? 24}px` }}>
-                        {new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                      </p>
-                      <p style={{ fontSize: `${data.invitation.venueSize ?? 16}px` }}>
-                        {data.invitation.time} • {data.invitation.venue}
-                      </p>
-                      <p style={{ fontSize: `${data.invitation.countdownSize ?? 14}px` }}>{countdown}</p>
+                    <div className="grid min-h-[40vh] grid-rows-3 gap-2">
+                      {['top', 'center', 'bottom'].map((slot) => (
+                        <div
+                          key={slot}
+                          className={`flex flex-col items-center justify-center gap-3 px-2 text-center`}
+                        >
+                          {(data.invitation.titleLinePosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.titleLineSize ?? 12}px` }}>
+                              {data.invitation.titleLine || 'Wedding Invitation'}
+                            </p>
+                          )}
+                          {(data.invitation.familiesLinePosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.familiesLineSize ?? 12}px` }}>
+                              {data.invitation.familiesLine}
+                            </p>
+                          )}
+                          {(data.invitation.namesPosition || data.invitation.heroPosition || 'center') === slot && (
+                            <h2 className="font-script leading-tight" style={{ fontSize: `${data.invitation.namesSize ?? 84}px` }}>
+                              {data.invitation.bride} & {data.invitation.groom}
+                            </h2>
+                          )}
+                          {(data.invitation.datePosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p style={{ fontSize: `${data.invitation.dateSize ?? 24}px` }}>
+                              {new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                          )}
+                          {(data.invitation.venuePosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p style={{ fontSize: `${data.invitation.venueSize ?? 16}px` }}>
+                              {data.invitation.time} • {data.invitation.venue}
+                            </p>
+                          )}
+                          {(data.invitation.countdownPosition || data.invitation.heroPosition || 'center') === slot && (
+                            <p style={{ fontSize: `${data.invitation.countdownSize ?? 14}px` }}>{countdown}</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
                     <div className="flex items-center justify-center gap-2">
                       <button type="button" className="action-btn" onClick={() => (isMuted ? startMusic() : setIsMuted(true))}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
