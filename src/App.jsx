@@ -1110,7 +1110,7 @@ function App() {
                   <img
                     src={section.backgroundImageUrl}
                     alt=""
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover md:object-contain"
                     onLoad={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
                   />
                   <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
@@ -1122,7 +1122,7 @@ function App() {
                     <img
                       src={section.animationUrl}
                       alt=""
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover md:object-contain"
                       onLoad={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
                     />
                   ) : isVideoBackground(section.animationUrl) ? (
@@ -1133,7 +1133,7 @@ function App() {
                       muted
                       playsInline
                       preload="auto"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover md:object-contain"
                       onLoadedMetadata={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.videoWidth, e.currentTarget.videoHeight)}
                     />
                   ) : (
