@@ -1105,7 +1105,7 @@ function App() {
             return (
             <motion.section
               key={section.id}
-              className={`min-h-screen px-4 py-10 md:py-16 relative overflow-hidden flex ${
+              className={`${hasMediaBackground ? 'min-h-0' : 'min-h-screen'} px-4 py-10 md:py-16 relative overflow-hidden flex ${
                 section.contentPosition === 'top'
                   ? 'items-start'
                   : section.contentPosition === 'bottom'
@@ -1113,9 +1113,8 @@ function App() {
                     : 'items-center'
               }`}
               style={{
-                backgroundColor: hasMediaBackground ? '#000000' : section.sectionColor || tint(theme.primary, idx * 8),
+                backgroundColor: section.sectionColor || tint(theme.primary, idx * 8),
                 aspectRatio: useAspectRatioSizing ? bgRatio : undefined,
-                minHeight: useAspectRatioSizing ? 'auto' : undefined,
               }}
               initial={transitionMap[section.transition || 'fadeUp'].initial}
               whileInView={transitionMap[section.transition || 'fadeUp'].whileInView}
@@ -1162,7 +1161,7 @@ function App() {
               <div className="max-w-5xl w-full mx-auto text-center text-white space-y-5 relative">
                 <div className="relative z-10 space-y-5">
                 {idx === 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 pt-8 md:pt-0">
                     <div className="grid min-h-[40vh] grid-rows-3 gap-2">
                       {['top', 'center', 'bottom'].map((slot) => (
                         <div
@@ -1200,7 +1199,7 @@ function App() {
                         </div>
                       ))}
                     </div>
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
                       <button type="button" className="action-btn" onClick={() => (isMuted ? startMusic() : setIsMuted(true))}>{isMuted ? 'Unmute Music' : 'Mute Music'}</button>
                       <button type="button" className="action-btn" onClick={startMusic}>Play Music</button>
                     </div>
