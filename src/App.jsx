@@ -220,6 +220,9 @@ function App() {
   const [presetName, setPresetName] = useState('');
   const [videoUiMute, setVideoUiMute] = useState({});
   const [sectionBgRatio, setSectionBgRatio] = useState({});
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => (typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false)
+  );
   const audioRef = useRef(null);
   const videoRefs = useRef({});
 
@@ -286,6 +289,14 @@ function App() {
       }
     }
   }, [data.musicUrl]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 768px)');
+    const onChange = () => setIsMobileViewport(media.matches);
+    onChange();
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     const weddingDate = new Date(`${data.invitation.date}T18:30:00`);
@@ -1101,7 +1112,7 @@ function App() {
           {data.sections.map((section, idx) => {
             const bgRatio = sectionBgRatio[section.id];
             const hasMediaBackground = Boolean(section.backgroundImageUrl || section.animationUrl);
-            const useAspectRatioSizing = Boolean(bgRatio && hasMediaBackground);
+            const useAspectRatioSizing = Boolean(bgRatio && hasMediaBackground && !isMobileViewport);
             return (
             <motion.section
               key={section.id}
@@ -1169,32 +1180,32 @@ function App() {
                           className={`flex flex-col items-center justify-center gap-3 px-2 text-center`}
                         >
                           {(data.invitation.titleLinePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.titleLineSize ?? 12}px` }}>
+                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: isMobileViewport ? fitTextToSection(data.invitation.titleLineSize ?? 12, 10) : `${data.invitation.titleLineSize ?? 12}px` }}>
                               {data.invitation.titleLine || 'Wedding Invitation'}
                             </p>
                           )}
                           {(data.invitation.familiesLinePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: `${data.invitation.familiesLineSize ?? 12}px` }}>
+                            <p className="uppercase tracking-[0.2em]" style={{ fontSize: isMobileViewport ? fitTextToSection(data.invitation.familiesLineSize ?? 12, 10) : `${data.invitation.familiesLineSize ?? 12}px` }}>
                               {data.invitation.familiesLine}
                             </p>
                           )}
                           {(data.invitation.namesPosition || data.invitation.heroPosition || 'center') === slot && (
-                            <h2 className="font-script leading-tight" style={{ fontSize: `${data.invitation.namesSize ?? 84}px` }}>
+                            <h2 className="font-script leading-tight" style={{ fontSize: isMobileViewport ? fitTextToSection(data.invitation.namesSize ?? 84, 26) : `${data.invitation.namesSize ?? 84}px` }}>
                               {data.invitation.bride} & {data.invitation.groom}
                             </h2>
                           )}
                           {(data.invitation.datePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p style={{ fontSize: `${data.invitation.dateSize ?? 24}px` }}>
+                            <p style={{ fontSize: isMobileViewport ? fitTextToSection(data.invitation.dateSize ?? 24, 14) : `${data.invitation.dateSize ?? 24}px` }}>
                               {new Date(data.invitation.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                             </p>
                           )}
                           {(data.invitation.venuePosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p style={{ fontSize: `${data.invitation.venueSize ?? 16}px` }}>
+                            <p style={{ fontSize: isMobileViewport ? fitTextToSection(data.invitation.venueSize ?? 16, 12) : `${data.invitation.venueSize ?? 16}px` }}>
                               {data.invitation.time} • {data.invitation.venue}
                             </p>
                           )}
                           {(data.invitation.countdownPosition || data.invitation.heroPosition || 'center') === slot && (
-                            <p style={{ fontSize: `${data.invitation.countdownSize ?? 14}px` }}>{countdown}</p>
+                            <p style={{ fontSize: isMobileViewport ? fitTextToSection(data.invitation.countdownSize ?? 14, 11) : `${data.invitation.countdownSize ?? 14}px` }}>{countdown}</p>
                           )}
                         </div>
                       ))}
