@@ -6,9 +6,9 @@ const STORAGE_KEY = 'wedding_invite_live_data_v4';
 const CONTROL_PANEL_PASSWORD = 'disha&akshit@2106';
 const CONTROL_UNLOCK_KEY = 'wedding_invite_control_unlocked';
 const MAX_IMAGE_MB = 15;
-const MAX_VIDEO_MB = 40;
+const MAX_VIDEO_MB = 150;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
+const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-matroska'];
 
 const compressImageFile = (file) =>
   new Promise((resolve) => {
@@ -42,6 +42,8 @@ const isImageBackground = (url = '') =>
 
 const isVideoBackground = (url = '') =>
   /\.(mp4|webm|ogg)$/i.test(url) || /^data:video\//i.test(url);
+
+const fitTextToSection = (size, min = 14) => `min(${size ?? min}px, 5vw)`;
 
 const tint = (hex, amount) => {
   const clean = hex.replace('#', '');
@@ -219,6 +221,7 @@ function App() {
   const [videoUiMute, setVideoUiMute] = useState({});
   const [sectionBgRatio, setSectionBgRatio] = useState({});
   const audioRef = useRef(null);
+  const videoRefs = useRef({});
 
   const theme = useMemo(
     () => ({ ...config.themes[data.themeKey], ...data.themeColors }),
@@ -546,6 +549,21 @@ function App() {
   const disableVideoSound = (item) => {
     if (item.muted ?? true) return;
     setVideoUiMute((prev) => ({ ...prev, [item.id]: true }));
+  };
+
+  const playVideoById = (videoId) => {
+    const video = videoRefs.current[videoId];
+    if (!video) return;
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {});
+    }
+  };
+
+  const pauseVideoById = (videoId) => {
+    const video = videoRefs.current[videoId];
+    if (!video) return;
+    video.pause();
   };
 
   const setSectionBackgroundRatio = (sectionId, width, height) => {
@@ -891,7 +909,7 @@ function App() {
                   </div>
                   <div className="field">
                     <span>Upload GIF/Video Background</span>
-                    <input type="file" accept="image/gif,video/mp4,video/webm,video/ogg" onChange={(e) => uploadSectionBackgroundAnimation(section.id, e.target.files)} />
+                    <input type="file" accept="image/gif,video/mp4,video/webm,video/ogg,video/quicktime,video/x-matroska,.mov,.mkv" onChange={(e) => uploadSectionBackgroundAnimation(section.id, e.target.files)} />
                   </div>
                 </div>
                 <label className="field">Body<textarea rows={3} value={section.body} onChange={(e) => updateSection(section.id, 'body', e.target.value)} /></label>
@@ -904,8 +922,8 @@ function App() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold">Upload Videos</p>
-                    <p className="text-xs opacity-70">MP4/WEBM/OGG, up to {MAX_VIDEO_MB}MB each.</p>
-                    <input type="file" accept="video/mp4,video/webm,video/ogg" multiple onChange={(e) => uploadMedia(section.id, 'video', e.target.files)} />
+                    <p className="text-xs opacity-70">MP4/WEBM/OGG/MOV/MKV, up to {MAX_VIDEO_MB}MB each.</p>
+                    <input type="file" accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-matroska,.mov,.mkv" multiple onChange={(e) => uploadMedia(section.id, 'video', e.target.files)} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -943,19 +961,18 @@ function App() {
                       ) : item.type === 'video' ? (
                         <div className="w-full h-full flex items-center justify-center">
                           <video
-                            autoPlay
+                            ref={(el) => { if (el) videoRefs.current[`cp-${item.id}`] = el; }}
                             loop
                             muted={getVideoMuted(item)}
                             playsInline
-                            onMouseEnter={() => enableVideoSound(item)}
-                            onMouseLeave={() => disableVideoSound(item)}
-                            onTouchStart={() => enableVideoSound(item)}
-                            onTouchEnd={() => disableVideoSound(item)}
+                            onMouseEnter={() => { enableVideoSound(item); playVideoById(`cp-${item.id}`); }}
+                            onMouseLeave={() => { disableVideoSound(item); pauseVideoById(`cp-${item.id}`); }}
+                            onTouchStart={() => { enableVideoSound(item); playVideoById(`cp-${item.id}`); }}
+                            onTouchEnd={() => { disableVideoSound(item); pauseVideoById(`cp-${item.id}`); }}
                             className={item.shadow ? 'max-w-full max-h-full object-contain shadow-lg' : 'max-w-full max-h-full object-contain'}
                             style={{ borderRadius: `${item.videoRoundness ?? 0}%` }}
-                          >
-                            <source src={item.src} type="video/mp4" />
-                          </video>
+                            src={item.src}
+                          />
                         </div>
                       ) : (
                         <div
@@ -1084,7 +1101,7 @@ function App() {
           {data.sections.map((section, idx) => {
             const bgRatio = sectionBgRatio[section.id];
             const hasMediaBackground = Boolean(section.backgroundImageUrl || section.animationUrl);
-            const useAspectRatioSizing = Boolean(bgRatio && section.animationUrl && !section.backgroundImageUrl);
+            const useAspectRatioSizing = Boolean(bgRatio && hasMediaBackground);
             return (
             <motion.section
               key={section.id}
@@ -1110,7 +1127,7 @@ function App() {
                   <img
                     src={section.backgroundImageUrl}
                     alt=""
-                    className="w-full h-full object-cover md:object-contain"
+                    className="w-full h-full object-cover"
                     onLoad={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
                   />
                   <div className="absolute inset-0 bg-black" style={{ opacity: (section.animationDim ?? 45) / 100 }} />
@@ -1122,7 +1139,7 @@ function App() {
                     <img
                       src={section.animationUrl}
                       alt=""
-                      className="w-full h-full object-cover md:object-contain"
+                      className="w-full h-full object-cover"
                       onLoad={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
                     />
                   ) : isVideoBackground(section.animationUrl) ? (
@@ -1133,7 +1150,7 @@ function App() {
                       muted
                       playsInline
                       preload="auto"
-                      className="w-full h-full object-cover md:object-contain"
+                      className="w-full h-full object-cover"
                       onLoadedMetadata={(e) => setSectionBackgroundRatio(section.id, e.currentTarget.videoWidth, e.currentTarget.videoHeight)}
                     />
                   ) : (
@@ -1189,8 +1206,8 @@ function App() {
                     </div>
                   </div>
                 )}
-                <h3 className="font-display" style={{ color: section.titleColor || '#ffffff', fontSize: `${section.titleSize ?? 52}px`, lineHeight: 1.15 }}>{section.title}</h3>
-                <p className="max-w-3xl mx-auto" style={{ color: section.bodyColor || '#fff5e9', fontSize: `${section.bodySize ?? 22}px`, lineHeight: 1.45 }}>{section.body}</p>
+                <h3 className="font-display" style={{ color: section.titleColor || '#ffffff', fontSize: fitTextToSection(section.titleSize ?? 52, 20), lineHeight: 1.15 }}>{section.title}</h3>
+                <p className="max-w-3xl mx-auto" style={{ color: section.bodyColor || '#fff5e9', fontSize: fitTextToSection(section.bodySize ?? 22, 12), lineHeight: 1.45 }}>{section.body}</p>
 
                 <div className="stage-output">
                   {section.media.map((item) => (
@@ -1213,19 +1230,18 @@ function App() {
                       ) : item.type === 'video' ? (
                         <div className="w-full h-full relative flex items-center justify-center">
                           <video
-                            autoPlay
+                            ref={(el) => { if (el) videoRefs.current[item.id] = el; }}
                             loop
                             muted={getVideoMuted(item)}
                             playsInline
-                            onMouseEnter={() => enableVideoSound(item)}
-                            onMouseLeave={() => disableVideoSound(item)}
-                            onTouchStart={() => enableVideoSound(item)}
-                            onTouchEnd={() => disableVideoSound(item)}
+                            onMouseEnter={() => { enableVideoSound(item); playVideoById(item.id); }}
+                            onMouseLeave={() => { disableVideoSound(item); pauseVideoById(item.id); }}
+                            onTouchStart={() => { enableVideoSound(item); playVideoById(item.id); }}
+                            onTouchEnd={() => { disableVideoSound(item); pauseVideoById(item.id); }}
                             className={item.shadow ? 'max-w-full max-h-full object-contain shadow-lg' : 'max-w-full max-h-full object-contain'}
                             style={{ borderRadius: `${item.videoRoundness ?? 0}%` }}
-                          >
-                            <source src={item.src} type="video/mp4" />
-                          </video>
+                            src={item.src}
+                          />
                         </div>
                       ) : (
                         <div
